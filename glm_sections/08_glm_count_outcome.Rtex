@@ -1,0 +1,185 @@
+We have seen how GLMs with binary outcomes, specifically logistic regressions, can be carried out with the \texttt{glm} package in \textit{R}.  We also showed that the Pearson Chi-square test for goodness of fit is actually asymptotically equivalent to likelihood ratio test on deviance.  Now we turn our focus into models with count outcomes, which is modelled with Poisson distribution and its variants.  
+
+We first consider the case where the observation period for all observations are identical (say, $1$ unit time).  In this case, we can focus on modelling each observation's event rate $\lambda_i$, which is the \textit{expected number of events within the unit time}.  The model can be formally written as
+\begin{gather}
+    Y_i|X_i \sim \text{Pois}(\lambda_i)\\
+    g(\lambda_i) = X_i\beta
+\end{gather}
+In Poisson GLM, the default and canonical link function is $log(.)$, so the model becomes,
+\begin{gather}
+    Y_i|X_i \sim \text{Pois}(\lambda_i)\\
+    \log{\lambda_i} = X_i\beta
+\end{gather}
+As in logistic regression, we can express $X$ as a row vector of covariates $(x_0 = 1, x_1, x_2, ..., x_{p-1})$ and $\beta$ as the column vector of regression coefficient $\T{(\beta_0, \beta_1, \beta_2, ..., \beta_{p-1})}$, then we have (omitting the $i$ for brevity):
+\begin{equation}
+    \log \lambda = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_{p-1} x_{p-1} \label{eq: coef_count}
+\end{equation}
+This expression grants us an explanation for the regression coefficients.  On the left-hand side, $\log \lambda$, is the logarithm of the event rate, or in brief, \textit{log rate}. Therefore, the difference in values of $X\beta$ between two scenarios reflects the event \textit{log rate ratio} between the scenarios:
+\begin{itemize}
+    \item $\beta_0$: The right-hand side becomes $\beta_0$ when $x_1, x_2, ..., x_{p-1}$ are all plugged in as $0$.  Therefore, $\beta_0$ is the log event rate under the scenario where all covariates has value $0$. 
+    \item $\beta_k$: If we increase $x_k$ by $1$ unit while holding other covariates as constant, the right-hand side would increase by $\beta_k$, i.e. the event log rate ratio would be $\beta_k$.  In other words, the event rate would become $\exp (\beta_k)$ times the original rate every time $x_k$ is increased by $1$.
+\end{itemize}
+The inference in Poisson regression is similar to that of logistic regression.  If $\beta_k \ne 0$, or equivalently $\exp{\beta}_k \ne 1$, then changes in $x_k$ would influence the event rate, so $x_k$ plays a role in explaining the outcome of interest.  Tests and confidence intervals for $\beta_k$ and $\exp{\beta}_k$ can be carried out with Wald test or likelihood ratio test (LRT).  Like logistic regression, for confidence intervals it is practically more common present the interval for \textit{rate ratios} rather than for log rate ratios.  
+
+\smallskip
+In practice, however, most of the time each subject is observed for different lengths of time (which in epidemiology is termed as the follow-up time).  For two subjects of the same covariate values but different follow-up times, we would expect that their event rates (per unit time) would be similar, but the expected value of event number would not be the same.  More precisely, since in Poisson distribution the event rate is assumed to be constant across time, the expected number of events should be proportional to the follow-up time.  In the previous model, we assumed that for a subject with covariate value $X_i$, their event rate (per unit time) would be $\exp(X_i\beta)$.  Now suppose the follow-up time for observation $i$ is $n_i$ units, then the expected number of events for observational $i$ should be $n_i\exp(X_i\beta)$.  Therefore, with heterogeneous follow-up time across subject, we would modify the model as follows
+\begin{gather}
+    Y_i|X_i \sim \text{Pois}(\lambda_i)\\
+    \log{\lambda_i} = \log n_i + X_i\beta \label{eq: pois_offset}
+\end{gather}
+Note that in \Cref{eq: pois_offset}, the term $\log n_i$ is not the intercept: an intercept is a regression coefficient for the variable $\mathbf{1}$, but here $\log n_i$ does not have any regression coefficients attached to it (or you may say that its regression coefficient is fixed to $1$).  This term is called the \textbf{offset}, implying it is an additional term that shifts the mean by a known amount.  After adding the offset, the explanation and inference of $\beta$ remains similar.  Now $\beta_0$ is the logarithm of the expected event number when \textit{both} all covariate \textit{and} $\log n_i$ is zero, meaning that $\beta_0$ is the log event rate in unit time. 
+
+\smallskip
+In the following, we will show how the methods can be applied in $\textit{R}$.
+
+% The log-likelihood of the model is then 
+% \begin{equation}
+%     \ell = \sum_i \ell_i = \sum_i \Big[ \bY_i \log\frac{p_i}{1-p_i} + \log(1-p_i) \Big]
+% \end{equation}
+
+\subsection{Poisson Regression by Example}
+As in data for binary outcome GLMs, in the case where the covariate pattern is limited, subjects with the same covariate values can be \textit{aggregated}.  In count outcome GLMs, the aggregated data would look like \Cref{tab: cont_cat_pois}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|cccc|c}
+         \toprule
+         & \multicolumn{4}{c}{Covariate pattern} & \multirow{2}{*}{Total}\\
+         & $1$ & $2$ & $\cdots$ & $K$  &\\
+         \hline
+         Events & $y_1$ & $y_2$ & $\cdots$ & $y_K$ & $y$\\
+         \hline
+         Person-time & $n_1$ & $n_2$ & $\cdots$ & $n_K$ & $n$\\
+         \bottomrule
+    \end{tabular}
+    \caption{Contingency table representation of count outcome data with limited covariate patterns}
+    \label{tab: cont_cat_pois}
+\end{table}
+
+Here \textit{Events} and \textit{Person-time} are the total number of events and total follow-up time within subjects of the corresponding covariate pattern.  The concept of person-time is frequently used in life statistics, where the estimated event rate for a certain subpopulation can be estimated as 
+\begin{equation}
+    \text{Estimated event rate} = \frac{\text{Number of Events}}{\text{Follow-up Person-time}}
+\end{equation}
+For example, if we are to estimate the acute attack rate in children with asthma aged 8 years old in year 2022, then we may gather the total number of recorded asthma attacks in 8-year-old children with asthma from the NHIRD, and divide it by the total person-time.  Note that the follow-up time of each child would vary. For example, a child having 9-year-old birthday on Mar 1, 2023 would have only 3 months of follow-up, since they would be no long 8 years old after Mar 1.
+
+\smallskip
+Note that although Poisson regression are suitable for count data, i.e. events that can repeatedly occur, it can also handle event that can only occur once, eg. death.  In this case, the subject is followed up until event occurs or they leave the study, and total number of events would be exactly the total number of subjects that experienced the event.  This kind of data can also be analyzed with logistic regression by treating event as a binary outcome, however, in this case we are throwing away information from the follow-up person-time.  For example, suppose the maximum follow-up time is one year, then a group of population dying within 3 months and dying between 3 to 6 months would be different in person-time in Poisson regression, but seen as the same in logistic regression (because they all died in these two scenario).  Therefore, most of the time it is advised that for data with time-to-event information, Poisson regression (or better yet, survival analysis) should be preferred against logistic regression.
+
+\smallskip
+We will now investigate an example provided in the Dobson textbook Table 9.1 shown below.  Suppose we would like to know:
+\begin{itemize}
+    \item Is the death rate higher for smokers than non-smokers after adjusting for age (assuming that smoking has identical effect among each age group)?
+    \item Is there differential effect of smoking related to age?
+\end{itemize}
+\begin{figure}
+    \centering
+    \includegraphics[width = 0.7\textwidth]{glm_sections/graphs/Table_9_1.png}
+    \label{fig: table_9_1}
+\end{figure}
+Note that this is aggregated data with subjects of the same smoking-age group combination pooled together.  To simplify the analysis, we relabel the age group with the middle value, show in the code below,
+<<>>=
+data <- data.frame(r = c(32, 104, 206, 186, 102, 2, 12, 28, 28, 31),
+                   n = c(52407, 43248, 28612, 12663, 5317, 18790, 10673, 5710, 2585, 1462),
+                   age = c(40, 50, 60, 70, 80, 40, 50, 60, 70, 80),
+                   smoke = c(1, 1, 1, 1, 1, 0, 0, 0, 0, 0))
+data
+@
+To assess if we should adjust for age linearly or non-linearly, we can plot 
+<<plot1, fig.pos="t", fig.align = "center", fig.height=4.45, fig.width=4.45>>=
+plot(data$age, data$r / data$n * 10000, pch = ifelse(data$smoke == 1, 19, 1), log = "y",
+     xlab = "Age", ylab = "Events per 10000 person-year", main = "Event rate - Age")
+legend(40, 200, c("Smokers", "Non-smokers"), pch = c(19, 1))
+@
+From the graph, it looks like we can adjust for age using quadratic terms.  Therefore, our model without interaction between age and smoking would be
+<<>>=
+pois_mod <- glm(r ~ offset(log(n)) + smoke + age + I(age^2), 
+                family = poisson(), data = data)
+summary(pois_mod)
+@
+Note that we added a \texttt{offset(.)} over \texttt{log(n)} so that the function wouldn't misunderstand \texttt{log(n)} as a regular variable.  For the family setting we use \texttt{poisson()}, so the link function would be the default and canonical link, natural log.  As we can see, after adjusting for age non-linearly, the log rate ratio of smokers against non-smokers is positive, \texttt{0.3545}, which means that smoking seems to \textit{increase} the rate of death.  From the Wald test on the right, this log rate ratio is significantly non-zero under significance level $0.05$.  Therefore, under the assumption that smoking has uniform effect on death rate across all age groups, and adjusting for age and squared age removes confounding, we conclude smoking increases death rate (This statement is actually still problematic in a causal inference perspective, but for now we will leave it as is).  As in logistic regression, often we are more interested in rate ratios rather than log rate ratios, so we may produce the rate ratio estimate and confidence interval with:
+<<>>=
+exp(coef(pois_mod))
+exp(confint.default(pois_mod))
+@
+So we have the rate ratio estimate for smoking as \texttt{1.425} with confidence interval \texttt{(1.155 - 1.759)}, which does not include $1$ and fits our conclusion in the Wald test.  We can also produce the likelihood ratio-based interval, which will be slightly different from the Wald-based interval:
+<<>>=
+exp(confint(pois_mod))
+@
+Now we turn to the second question: Is there differential effect of smoking related to age?  From the plot above, its seems that the smoking increases the death rate in the age range of $35-74$ years old, where for those of $75-84$ years old, smoking is associated with lower death rate.  However, we are not sure if this discrepancy reflect true interaction or is just a result of random variation.  To test for existence of interaction, We can fit the following model with interaction terms (here we do not want to impose any assumptions on the pattern of interaction, so we used categorical age groups for the interaction):
+<<>>=
+pois_mod_inter <- glm(r ~ offset(log(n)) + smoke + age + I(age^2) + smoke:factor(age), 
+                      family = poisson(), data = data)
+summary(pois_mod_inter)
+@
+Note that four more variables representing interaction is adding into the model by \texttt{smoke:factor(age)}.  The explanation for the regression coefficients corresponding to the interaction terms are more involved.  Under this model, for subjects within the $40$-year-old age group, the effect of smoking on death rate is represented by the log odds ratio estimate \texttt{1.421} (since for this age group, all interaction terms are zero).  For subjects within the $50$-year-old age group, the effect of smoking is instead \texttt{1.421-0.5858}.  This can be derived by picturing a subject of age within $45-54$ years old, say, $50$ years old.  If this subject did not smoke, their log event rate would be
+\begin{equation}
+    \beta_{\text{(Intercept)}} + 50 \beta_{\text{age}} + 2500 \beta_{\text{age}^2}
+\end{equation}
+If this subject smoked, their log event rate would then be
+\begin{equation}
+    \beta_{\text{(Intercept)}} + \beta_{\text{smoke}} + 50 \beta_{\text{age}} + 2500 \beta_{\text{age}^2} + \beta_{\text{smoke:(age = 50)}} 
+\end{equation}
+Therefore, the log rate ratio between smoking and not smoking would be $\beta_{\text{smoke}} + \beta_{\text{smoke:(age = 50)}}$.  Consequently, the regression coefficient for interaction term \texttt{smoke:factor(age)50} is the \textit{difference of log rate ratio for smoking between the $50$-year-old group and the $40$-year-old group}.  Alternatively, it is the \textit{logarithm of the ratio of rate ratio for smoking between the $50$-year-old group and the $40$-year-old group}.  Therefore, to test for the null hypothesis that there is no interaction, i.e. the effect of smoking is uniform across all age groups, we should test if all regression coefficients for the interaction terms are simultaneously zero.  For this, the easiest way is to use likelihood ratio test (LRT), since the original model is nested within the interaction model with all coefficients for the interaction terms set to zero.
+<<>>=
+anova(pois_mod, pois_mod_inter, test = "LRT")
+@
+The test rejects the null hypothesis under significance level of $0.05$, which indicates that there \textit{is} interaction between age group and smoking with respect to death rate, i.e. smoking has differential effect among different age groups.  So to correctly model the data, we should use the model with interaction terms.  However, as we have elaborated, the regression coefficients for this model cannot be easily explain.  We can therefore fit an equivalent model and calculate the estimate and confidence intervals for the exponential of its regression coefficients:
+<<>>=
+pois_mod_inter_2 <- glm(r ~ offset(log(n)) + age + I(age^2) + smoke:factor(age), 
+                        family = poisson(), data = data)
+summary(pois_mod_inter_2)
+exp(coef(pois_mod_inter_2))
+exp(confint(pois_mod_inter_2))
+@
+Here although we took out the \texttt{smoke} term, the \texttt{smoke:factor(age)40} is added back, so this model is actually equivalent to the previous interaction model.  Now the regression coefficient for the interaction terms \texttt{smoke:factor(age)40} is still the log rate ratio for smoking within the $40$-year-old age group, but the regression coefficient for \texttt{smoke:factor(age)50} is the log rate ratio for smoking within the $50$-year-old age group (why?).  Therefore, the exponentiated coefficients can be directly interpreted as the rate ratios for smoking within each age group.
+
+\subsection{Overdispersion in Generalized Linear Models}
+In the second handout when we talked about deviance, we derived that a Poisson model (with number of covariate patterns equal to the sample size) would have deviance 
+\begin{equation}
+    D = 2\sum_i \bY_i \log \Big( \frac{\bY_i}{\hat{\lambda}_i} \Big)
+\end{equation}
+And in the third handout we showed the following Taylor expansion approximation:
+\begin{equation}
+    x\log\Big(\frac{x}{x_0}\Big) \approx (x-x_0) + \frac{1}{2}\frac{(x-x_0)^2}{x_0}
+\end{equation}
+Therefore, given $\bY_i$ is close to $\hat{\lambda_i}$, the estimated mean number of events for observation $i$, we have 
+\begin{equation}
+    D = 2\sum_i \bY_i \log \Big( \frac{\bY_i}{\hat{\lambda}_i} \Big) \approx 2\sum_i \Big[(\bY_i - \hat{\lambda}_i) + \frac{1}{2} \frac{(\bY_i - \hat{\lambda}_i)^2}{\hat{\lambda}_i}\Big]
+\end{equation}
+Further using the fact that in GLMs with intercepts, the grand mean is well calibrated (we have also used this in the second handout when deriving the deviance), we have $\frac{1}{n}\sum_i \bY_i = \frac{1}{n}\sum_i \hat{\lambda}_i$, or $\sum_i (\bY_i-\hat{\lambda}_i) = 0$.  Therefore
+\begin{equation}
+    D \approx 2\sum_i \Big[(\bY_i - \hat{\lambda}_i) + \frac{1}{2} \frac{(\bY_i - \hat{\lambda}_i)^2}{\hat{\lambda}_i}\Big] = \sum_i \frac{(\bY_i - \hat{\lambda}_i)^2}{\hat{\lambda}_i} := X^2
+\end{equation}
+$X^2$ is the Pearson chi-squared statistic for Poisson regression models, which should also be asymptotically distributed as $\chi^2_{(n-p)}$ when the null hypothesis of well-fitted model is true.  Inspecting the $X^2$ statistic, we see that since the variance and mean of a Poisson-distributed random variable are both $\lambda$, the statistic is actually of the form:
+\begin{equation}
+    X^2 = \sum_i \frac{(o_i - e_i)^2}{\hat{var}(o_i)}
+\end{equation}
+where $o_i$ and $e_i$ stand for the observed and expected outcome of observation $i$.  An ill-fitted model would have a large $X^2$, which means that actually variance of $o_i$, reflected by $(o_i-e_i)^2$ is actually much larger than the estimated variance of $o_i$.  That is, the variance, or \textit{dispersion} of the observed variance is larger than expected by the model.  Therefore, if a model is ill-fitted reflected by a $X^2$ (or $D$) much larger than $n-p$, we say that there is \textit{overdispersion}.  In practice, we can treat overdispersion as a synonym for "badness of fit" in GLMs.
+
+A simple (but not very insightful) way to deal with overdispersion is to plug in a larger dispersion parameter $\phi$, which we have always assumed to be $1$ in Poisson regression.  Specifically, since the null distribution of $D$ (or $X^2$) should be $\chi^2_{(n-p)}$ that has a mean of $n-p$, it is common to just set $\phi = D/(n-p)$ (or $X^2/(n-p)$), so that the new deviance (or Pearson chi-squared statistic) would be just $n-p$.  Setting the dispersion parameter to be larger than $1$ would lead to the same MLE estimates for the regression coefficients, but a larger confidence interval.  This is intuitive since the (single-observation) log-likelihood of the one-parameter canonical exponential family with dispersion is (setting $a(\phi) = \phi$):
+\begin{equation}
+    \ell_i(\theta_i) = \frac{y_i\theta_i - b(\theta_i)}{\phi} + c(y_i, \phi)
+\end{equation}
+For the MLE, $c(y, \phi)$ does not influence the estimate since we will be differentiating $\ell$ by $\theta$, the score would then be
+\begin{equation}
+    U(\beta) = \sum_i \frac{\partial}{\partial \beta} \ell_i(\theta_i) = \frac{1}{\phi}\sum_i (y_i - b'(\theta_i))\frac{\partial \theta_i}{\partial \beta}
+\end{equation}
+Therefore, $\phi$ would not influence the MLE estimate since we are just solving $U(\beta)=0$.  However, the estimated variance of $\hat{\beta}$ would become larger with $\phi > 1$ since now the Fisher information would be multiplied by a factor of $\frac{1}{\phi}$, so the estimated variance-covariance matrix for the MLE, which is the inverse of the Fisher information, would be multiplied by a factor of $\phi$.  Let us fit a very bad model on our previous data to show this:
+<<>>=
+pois_mod_od <- glm(r ~ offset(log(n)) + age, family = poisson(), data = data)
+(nodisp <- summary(pois_mod_od))
+(phi <- pois_mod_od$deviance / pois_mod_od$df.residual)
+(disp <- summary(pois_mod_od, dispersion = phi))
+(disp$coefficients[,2] / nodisp$coefficients[,2])^2
+@
+Here we can see the in the original "bad" model with only \texttt{age} as explanatory variable, the residual deviance is \texttt{85.012}, which is $10$ times its degrees of freedom $8 = 10-2$.  If we set the dispersion parameter as \texttt{85.012/8 = 10.626}, then we can see that the parameter estimates remains the same, but the standard error of the estimates becomes larger.  In fact, we can verify that the squared ratio between the standard errors in these two models is exactly the dispersion parameter, just as we would expect from the theoretical arguments above.
+
+\smallskip
+The reason why we said that using estimated dispersion parameters is not insightful is that it only addresses the problem by inflating the variance of the parameter estimates, but does not look into \textit{why} there is overdispersion, or badness of fit.  Common reasons for overdispersion are lists as follows, with some "more insightful" strategies to deal with them:
+\begin{itemize}
+    \item Ill-specified variable functional form: Transform the variables and fit again
+    \item Unmeasured explanatory variables: Try to gather more explanatory variables
+    \item Individual-specific effects: Fit a generalized linear mixed model (GLMM), generalized estimating equation (GEE) or negative binomial model (beta-binomial model for binary outcome GLMs)
+    \item Correlated observations: Fit a GLMM or GEE
+\end{itemize}
+In the above, the negative binomial model assumes that the event rate for each individual actually comes from a Gamma-distributed distribution with mean $\exp(X\beta)$, and the beta-binomial model assumes that the event probability for each individual comes from a Beta distribution with mean $\text{antilogit}(X\beta)$.  The details of these models is out of scope for this course, so we will stop here.

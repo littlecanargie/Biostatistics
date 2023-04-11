@@ -1,0 +1,21 @@
+OLS estimators work great when the conditional distribution of the outcome, $Y|X$, can be modelled by normal distributions and the mean $\E[Y|X]$ can be modelled as a linear combination of $X$.  In the case where there are non-linear relationships between elements of $X$ and $Y$, we can try to pre-transform elements in $X$ such as including square terms, cube terms, log terms, ... etc. before applying the OLS estimator.  However, in biomedical studies, the nature of the outcome of interest can often violate these two assumption.  For example, suppose we are interested in the occurrence or absence of an event, which makes $Y$ a binary variable.  We would encounter problems in two fronts:
+\begin{enumerate}
+    \item \textbf{The problem in mean component}:\\
+    Since $Y$ is a binary variable, we have
+    \begin{equation}
+        \E[Y|X] = \P[Y = 1 | X]
+    \end{equation}
+    Therefore, $\E[Y|X]$ is a probability and should be in $[0, 1]$.  However, in linear models we model $\E[Y|X]$ with $X\beta$, which can well be outside of $[0, 1]$.  For example, if there is only one explanatory variable, age, and the estimated model is 
+    \begin{equation}
+        \hat{\E}[Y|X] = 0.05 + 0.015 \times \text{age}
+    \end{equation}
+    Then we would expect a disease probability of 1.75 for a subject aged 75 years old, which is improbable.  This scenario would be even more prevalent when we include several explanatory variables.  It would be desirable if the model could automatically eliminate this kind of scenario.
+    A side point to note is that, although the scenario above is undesirable, under the case where the variation of event probability is not too large among observations, and the explanatory variables is also not heavy-tailed, modelling probabilities with vanilla linear combinations of $X$ can still be reasonable.  In addition, it has the advantage of easy interpretation of regression coefficients: an increase in $X_k$ by one unit leads to a $\hat{\beta}_k$ increase in event probability.  This is called a \textit{linear probability model}, and is more often used among econometricians.  All in all, we need to remember the famous quote: "\textit{All models are wrong, but some are useful}".
+    \item \textbf{The problem in random component}:\\
+    We mentioned that for the OLS estimator to be BLUE, the error $\varepsilon$ should be \textit{homoscedastic}, meaning that the error variance should be same among every observation.  If $\varepsilon$ is heteroscedasitc, then $\beta$ would still be unbiased (given that $\E[Y|X]$ is adequately modelled), but the OLS estimator is no longer efficient.  When $Y|X$ is not normally distributed, the error variance of $Y|X$ is often related to the mean $\E[Y|X]$, so the error is destined to be heteroscedastic unless every observation has the same mean.  For example, when $Y$ is binary, $Y|X$ may follow a Bernoulli distribution, so its variance is 
+    \begin{equation}
+        var[Y|X] = \P[Y=1|X]\P[Y=0|X] = (X\beta)(1-X\beta)
+    \end{equation}
+    which nearly guarantees heteroscedasticity.  In this case, as we have mentioned around \Cref{eq: WLS}, a WLS estimator using the inverse of variance as weights would perform better than the OLS estimator, and since the weights now depends on $\beta$, we would need an iterative procedure that alternates between estimating $\beta$ with WLS and plugging in the estimated $\beta$ into the weights.  (In fact, it can be shown that combining this iterative procedure with non-linear mean component leads to one of the algorithms used in generalized linear models!)
+\end{enumerate}
+With the two main problems in mind, we can now introduce the backbone structure of generalized linear models (GLMs), which served to tackle these two problems in one piece.

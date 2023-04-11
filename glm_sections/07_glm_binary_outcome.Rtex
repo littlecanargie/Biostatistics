@@ -1,0 +1,314 @@
+We have gone through the general form of GLMs, along there estimation and inference procedures.  Now we will look specifically into models with binary outcomes, which can be expressed as 
+\begin{gather}
+    Y_i|X_i \sim \text{Bernoulli}(p_i)\\
+    g(p_i) = X_i\beta
+\end{gather}
+In the following, we will assume that the link function $g(.)$ is chosen to be the canonical link, logit, so that the model becomes,
+\begin{gather}
+    Y_i|X_i \sim \text{Bernoulli}(p_i)\\
+    \log\frac{p_i}{1-p_i} = X_i\beta
+\end{gather}
+Suppose we can express $X$ as a row vector of covariates $(x_0 = 1, x_1, x_2, ..., x_{p-1})$ and $\beta$ as the column vector of regression coefficient $\T{(\beta_0, \beta_1, \beta_2, ..., \beta_{p-1})}$, the we have
+\begin{equation}
+    \log \frac{p}{1-p} = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_{p-1} x_{p-1} \label{eq: coef_bin}
+\end{equation}
+This expression grants us an explanation for the regression coefficients.  Note that the left-hand side, $\log \frac{p}{1-p}$, is the \textit{log odds} of event, so the difference in values of $X\beta$ between two scenarios reflects the event \textit{log odds ratio} between the scenarios:
+\begin{itemize}
+    \item $\beta_0$: The right-hand side becomes $\beta_0$ when $x_1, x_2, ..., x_{p-1}$ are all plugged in as $0$.  Therefore, $\beta_0$ is the event log odds under the scenario where all covariates has value $0$. 
+    \item $\beta_k$: If we increase $x_k$ by $1$ unit while holding other covariates as constant, the right-hand side would increase by $\beta_k$, i.e. the event log odds ratio would be $\beta_k$.  In other words, the event odds would become $\exp (\beta_k)$ times the original odds everytime $x_k$ is increased by $1$.
+\end{itemize}
+More often than not, we will be interested in the inference of the $\beta_k$'s:  if $\beta_k \ne 0$, then changes in $x_k$ would influence the event probability, meaning that $x_k$ plays a role in explaining the outcome of interest.  Tests for $\beta_k$ can be carried out with Wald test or likelihood ratio test (LRT), with the former directly modelling the asymptotic distribution of $\hat{\beta}_k$, and the latter comparing two models where one estimates $\beta_k$ freely and one constrains $\beta_k$ to be zero.  For confidence interval construction, it is practically more common present the interval for \textit{odds ratios} rather than for log odds ratios.  Therefore, after obtaining the confidence interval for the log odds ratio $\beta_k$ as $(\hat{l}_{\beta_k}, \hat{u}_{\beta_k})$, we may convert it to the confidence interval for the odds ratio $\exp(\beta_k)$ as $(\exp(\hat{l}_{\beta_k}), \exp(\hat{u}_{\beta_k}))$.  When the confidence interval of $\exp(\beta_k)$ does not cover $1$, it implies that $x_k$ influences the outcome.  In the following, we will show how the methods above can be used in applied analyses.
+
+% The log-likelihood of the model is then 
+% \begin{equation}
+%     \ell = \sum_i \ell_i = \sum_i \Big[ \bY_i \log\frac{p_i}{1-p_i} + \log(1-p_i) \Big]
+% \end{equation}
+ 
+
+\subsection{Logistic Regression with Limited Covariate Patterns}
+We first consider a special scneario where we try to model our binary outcome over a single categorical variable with $K$ levels.  In this case, we may divide the observations into $K$ subgroups based on their values for the categorical variable, shown in \Cref{tab: cont_cat}.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|cccc|c}
+         \toprule
+         & \multicolumn{4}{c}{Subgroups} & \multirow{2}{*}{Total}\\
+         & $1$ & $2$ & $\cdots$ & $K$  &\\
+         \hline
+         Events & $y_1$ & $y_2$ & $\cdots$ & $y_K$ & $y$\\
+         Non-events & $n_1-y_1$ & $n_2-y_2$ & $\cdots$ & $n_N-y_K$ & $n-y$\\
+         \hline
+         Total & $n_1$ & $n_2$ & $\cdots$ & $n_K$ & $n$\\
+         \bottomrule
+    \end{tabular}
+    \caption{Contingency table representation of binary outcome data with categorical predictors}
+    \label{tab: cont_cat}
+\end{table}
+Note that here we have \textit{aggregated} the data, so $y_i$ now stands for the number of events for subgroup $i$ and \textit{not} the observed outcome for individual $i$.  A most commonly asked question for this type of data is whether all subgroups have the same event rate, i.e. testing for the following set of hypotheses:
+\begin{align*}
+    H_0: &\text{ All subgroups have the same event probability}\\
+    H_1: &\text{ At least one subgroup has different event probability than others}
+\end{align*}
+This set of hypotheses is the same as testing whether a model setting identical event probability for each subgroup fits the data well, which can be answered by goodness-of-fit test using deviance.  To obtain the deviance, we first need to know what the "saturated model" is.  We said that a saturated model is a model which assigns a distinct parameter $\theta_i$ for each \textit{covariate pattern}.  For this piece of data, our saturated model would have $K$ event probability parameters $(p_1, p_2, ..., p_K)^\top$, one for each subgroup.  The saturated model can then be written as 
+\begin{equation}
+    y_i \sim \text{Binomial}(p_i, n_i)
+\end{equation}
+with log-likelihood function
+\begin{equation}
+    \sum_{i=1}^{K} \Big[ \log {n_i \choose y_i} + y_i \log p_i + (n_i - y_i) \log(1-p_i) \Big]
+\end{equation}
+which upon maximization with respect to $(p_1, p_2, ..., p_K)^\top$ would yield the estimates
+\begin{equation}
+    \hat{p}_i = \frac{y_i}{n_i}
+\end{equation}
+Therefore, the observed log-likelihood for the saturated model can be written as
+\begin{align}
+    \ell_{\text{sat}} &= \sum_{i=1}^{K} \Big[\log {n_i \choose y_i} + Y_i \log \hat{p}_i + (n_i - y_i) \log(1-\hat{p}_i)\Big]\\
+    &= \sum_{i=1}^{K} \Big[\log {n_i \choose y_i} + y_i \log \frac{y_i}{n_i} + (n_i - y_i) \log\frac{n_i-y_i}{n_i}\Big]\\
+    &= \sum_{i=1}^{K} \Big[y_i \log y_i + (n_i-y_i) \log (n_i-y_i)\Big] + \sum_{i=1}^{K} \Big[ \log {n_i \choose y_i} - n_i \log n_i \Big] \label{eq: l_sat_cat}
+\end{align}
+
+\smallskip
+Under $H_0$, all subgroups have the same event probability $p$, so the model becomes
+\begin{equation}
+    y_i \sim \text{Binomial}(p, n_i)
+\end{equation}
+with log-likelihood function
+\begin{align}
+    &\sum_{i=1}^{K} \Big[ \log {n_i \choose y_i} + y_i \log p + (n_i - y_i) \log(1-p) \Big]\\ 
+    = &\big(\sum_{i=1}^{K}{y_i}\big) \log p + \big(\sum_{i=1}^{K} (n_i - y_i)\big) \log(1-p) + \sum_{i=1}^{K} \log {n_i \choose y_i} \\
+    = & y \log p + (1-y) \log (1-p) + \sum_{i=1}^{K} \log {n_i \choose y_i}
+\end{align}
+which upon maximization yields the straightforward estimate for $p$
+\begin{equation}
+    \hat{p} = \frac{y}{n}
+\end{equation}
+And the predicted number of events for subgroup $i$ can be written as 
+\begin{equation}
+    \hat{y}_i = n_i\hat{p}
+\end{equation}
+Therefore, the observed log-likelihood for the model under $H_0$ can be written as
+\begin{align}
+    \ell &= \sum_{i=1}^{K} \Big[ \log {n_i \choose y_i} + y_i \log \hat{p} + (n_i - y_i) \log(1-\hat{p}) \Big]\\
+    &= \sum_{i=1}^{K} \Big[\log {n_i \choose y_i} + y_i \log \frac{n_i \hat{p}}{n_i} + (n_i - y_i) \log\frac{n_i-n_i\hat{p}}{n_i}\Big]\\
+    &= \sum_{i=1}^{K} \Big[\log {n_i \choose y_i} + y_i \log \frac{\hat{y}_i}{n_i} + (n_i - y_i) \log\frac{n_i-\hat{y}_i}{n_i}\Big]\\
+    &= \sum_{i=1}^{K} \Big[Y_i \log \hat{y}_i + (n_i-y_i) \log (n_i-\hat{y}_i)\Big] + \sum_{i=1}^{K} \Big[ \log {n_i \choose y_i} - n_i \log n_i \Big] \label{eq: l_cat}
+\end{align}
+
+\smallskip
+From \Cref{eq: l_sat_cat,eq: l_cat}, we have the deviance statistic:
+\begin{align}    
+    D &= 2(\ell_\text{sat} - \ell)\\
+    &= 2\sum_{i=1}^{K} \Big[y_i \log y_i + (n_i-y_i) \log (n_i-y_i)\Big] - \sum_{i=1}^{K} \Big[Y_i \log \hat{y}_i + (n_i-y_i) \log (n_i-\hat{y}_i)\Big]\\
+    &= 2\sum_{i=1}^{K} \Big[y_i \log \big(\frac{y_i}{\hat{y}_i}\big) + (n_i-y_i) \log \big(\frac{n_i-y_i}{n_i - \hat{y_i}}\big)\Big] \label{eq: d_cat}
+\end{align}
+which should be asymptotically distributed as $\chi^2_{K-1}$, since the saturated model has $K$ parameters and the model under $H_0$ has only $1$ parameter.
+
+\smallskip
+Note that when $H_0$ is true, $y_i$ should be close to $\hat{y_i}$, and $n-\hat{y}_i$ should be close to $n_i-\hat{y}_i$.  Therefore, considering the following Taylor expansion for $f(x) = x\log\big(\frac{x}{x_0}\big)$ around $x = x_0$:
+\begin{align}
+    f(x) &= x\log\big(\frac{x}{x_0}\big)\\
+    &\approx f(x_0) + f'(x_0)(x-x_0) + \frac{f''(x_0)}{2}(x-x_0)^2 \\ 
+    & = 0 + 1 \cdot (x-x_0) + \frac{1/x_0}{2}(x-x_0)^2 = (x-x_0) + \frac{1}{2}\frac{(x-x_0)^2}{x_0}
+\end{align}
+Using the above to approximate \Cref{eq: d_cat} and we yield
+\begin{align}
+    D &= 2\sum_{i=1}^{K} \Big[y_i \log \big(\frac{y_i}{\hat{y}_i}\big) + (n_i-y_i) \log \big(\frac{n_i-y_i}{n_i - \hat{y_i}}\big)\Big]\\
+    &\approx 2\sum_{i=1}^{K} \bigg[(y_i - \hat{y}_i) + \frac{1}{2}\frac{(y_i - \hat{y}_i)^2}{\hat{y}_i} + [(n_i - y_i) - (n_i - \hat{y}_i)] + \frac{1}{2}\frac{[(n_i - y_i) - (n_i - \hat{y}_i)]^2}{n_i - \hat{y}_i}\bigg]\\
+    & = \sum_{i=1}^{K} \bigg[ \frac{(y_i - \hat{y}_i)^2}{\hat{y}_i} + \frac{[(n_i - y_i) - (n_i - \hat{y}_i)]^2}{n_i - \hat{y}_i} \bigg]\\
+    & := \sum_j \frac{(o_j-e_j)^2}{e_j} := X^2
+\end{align}
+Here $j$ rotates through each \textit{cell} in the contingency table, where $o_j$ and $e_j$ are the observed and expected count for each cell under $H_0$.  This is the well-known \textbf{Pearson chi-squared statistic} and should also have an asymptotic distribution of $\chi_{K-1}^2$.  In fact, simulations have shown that the Pearson chi-squared statistic $X^2$ actually performs \textit{better} than the deviance $D$ under finite samples since $D$ can be largely influenced by small event frequencies.  Nevertheless, goodness-of-fit test based on deviance usually suffices for applied analyses.
+
+\smallskip
+Now let us demonstrate how the model above can be carried out in the \textit{glm} package in \textit{R}.  Suppose we have a set of data in contingency table form shown in \Cref{tab: cont_cat_ex}.  We may construct the data in \textit{R} using the following code:
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|ccc}
+         \toprule
+         & \multicolumn{3}{c}{Subgroups} \\
+         & $A$ & $B$ & $C$  \\
+         \hline
+         Events & $30$ & $40$ & $20$\\
+         Non-events & $60$ & $40$ & $60$\\
+         \hline
+         Total & $90$ & $80$ & $80$\\
+         \bottomrule
+    \end{tabular}
+    \caption{Example contingency table of binary outcome data with categorical predictors}
+    \label{tab: cont_cat_ex}
+\end{table}
+
+<<include = FALSE>>=
+library(tidyverse)
+@
+
+<<>>=
+data_agg_1 <- data.frame(y1 = c(30, 40, 20), 
+                         y0 = c(60, 40, 60), 
+                         group = c("A", "B", "C"))
+print(data_agg_1)
+@
+
+Now we try to fit a saturated model, i.e. a model that assumes each subgroup has possibly distinct even probability.  This can be carried out by including the group variable into the model, which would end up in two dummy variables entering the model since the group variable has three levels (why?).
+
+<<>>=
+mod_agg_sat_1 <- glm(cbind(y1, y0) ~ factor(group), 
+                     family = binomial(), data = data_agg_1)
+summary(mod_agg_sat_1)
+@
+We provide some explanations of the code and output:
+\begin{itemize}
+    \item In the code calling the function \texttt{glm}, \texttt{cbind(y1, y0)} assigns a two-column matrix as the outcome variable, which indicates that the data is in aggregate form and \texttt{y1} stands for number of events and \texttt{y0} stands for number of non-events.  \texttt{factor(group)} adds the group categorical variable into the predictors.  \texttt{family = binomial()} specifics the outcome distribution as binary.  Note that we did not specify the link function here, so the function chooses the default link for binary outcomes, logit.  You'll have to specify \texttt{binomial("probit")} or \texttt{binomial("cloglog")} if you want to use probit link or complementary log-log link instead.
+    \item In the summary of results, we see that there are three lines standing for three regression coefficients: \texttt{(Intercept)}, \texttt{factor(group)B} and \texttt{factor(group)C}.  That is, the log odds is modelled as:
+    \begin{equation}
+        \log \big(\frac{p}{1-p}\big) = \beta_0 + \mathbf{1}(\text{group B})\beta_1 + \mathbf{1}(\text{group C})\beta_2 \label{eq: cont_cat_ex_mean}
+    \end{equation}
+    Therefore, $\hat{\beta_0} =$ \texttt{-0.6931} is the estimated event log odds for group A.  $\hat{\beta_1} =$ \texttt{0.6931} is the estimated event log odds ratio of group B compared to group A.  $\hat{\beta_2} =$ \texttt{-0.4055} is the estimated event log odds ratio of group C compared to group A.
+    \item The \texttt{Pr(>|z|)} column is the Wald test for the null hypothesis that each regression coefficient is zero.  However, we would like to test if the regression coefficients for the two factor dummy variables are \textit{both} zero, and this output does not give us information for this test. 
+    \item In the deviance part, we first see the null deviance, which is the deviance of a model with \textit{only the intercept}, and therefore has a degree of freedom of $2$.  The residual deviance is the deviance of the current model, which should be zero (with some rounding error) since this model is exactly the saturated model.
+\end{itemize}
+In the output above, the regression coefficient estimates (for log odds ratios) are given, yet most of the time we would want the odds ratio estimates and their confidence intervals.  This can be produced with the following code:
+<<>>=
+exp(coef(mod_agg_sat_1))
+exp(confint.default(mod_agg_sat_1, level = 0.95))
+@
+Here, the \texttt{confint.default} function outputs Wald confidence intervals.  Using the \texttt{confint} instead of the \texttt{confint.default} function would produce likelihood-ratio based confidence intervals, which should be similar to Wald intervals asymptotically.  Based on the output, we have the event odds ratio between group B and group A estimated to be \texttt{2.00} with 95\% confidence interval \texttt{(1.076 $\sim$ 3.717)}, which does not include $1$ and corresponds to the significance of Wald test for the regression coefficient shown previously.  The event odds ratio between group C and group A is estimated to be \texttt{0.67} with 95\% confidence interval \texttt{(0.341 $\sim$ 1.302)}.
+
+\smallskip
+Now we set out to test if the three subgroups have identical event probabilities.  We first use LRT, which involves comparing the likelihood of the model above with a model that gives all groups the same event probabilities, which we fit bellow:
+<<>>=
+mod_agg_null_1 <- glm(cbind(y1, y0) ~ 1, family = binomial(), data = data_agg_1)
+summary(mod_agg_null_1)
+@
+The \texttt{$\sim$ 1} in the \texttt{glm} function indicates that we want a model with only the intercept, so in the output we only have one regression coefficient. The log odds is now modelled as
+\begin{equation}
+    \log \big(\frac{p}{1-p}\big) = \beta_0
+\end{equation}
+Also note the null deviance is identical to the residual deviance, which reconfirms that we are fitting a model with only the intercept.  With both models at hand, we can conduct the LRT with the \texttt{anova} function:
+<<>>=
+anova(mod_agg_null_1, mod_agg_sat_1, test = "LRT")
+@
+We can see that the LRT has degrees of freedom of $2$, which is the difference of $3$ parameters in the saturated model and $1$ parameter in the model under the null hypothesis.  The test was significant under significance level $0.05$ with $p$-value \texttt{0.00359}, so we may conclude that the event probabilities of the three subgroups are \textit{not} identical.  Alternatively, we  can use the goodness-of-fit test based on Pearson chi-squared statistics:
+<<>>=
+chisq.test(data_agg_1[, c("y1", "y0")])
+@
+Here in the code we input the first two columns of our data, i.e. the contingency table into \texttt{chisq.test} to obtain the results for Pearson's chi-squared test for goodness-of-fit.  The $X^2$ statistic is \texttt{11.285}, which is actually very close to the LRT statistics, \texttt{11.259}.  The degrees of freedom is of course also $2$, and we have a very similar $p$-value \texttt{0.00354}.  Still another way to carry out the test is to simultaneously test if $\beta_1$ and $\beta_2$ in \Cref{eq: cont_cat_ex_mean} are simultaneously zero with Wald test.  However, this kind of test is not included in default packages in \textit{R}, so we will have to calculate the test statistic manually: 
+<<>>=
+(fisher_inverse <- summary(mod_agg_sat_1)$cov.scaled)
+(L <- matrix(c(0,1,0,0,0,1), 2, 3, byrow = T))
+(beta_hat <- coef(mod_agg_sat_1))
+W <- t(L %*% beta_hat) %*% 
+        solve(L %*% fisher_inverse %*% t(L)) %*% 
+        (L %*% beta_hat)
+1-pchisq(W, 2)
+@
+
+Here \texttt{summary(mod\_agg\_sat\_1)\$cov.scaled} extracts the estimated variance-covariance matrix of the regression coefficient estimator (which includes intercept so is of dimension $3 \times 3$), i.e. the estimated inverse of Fisher information.  \texttt{L} is the linear transformation matrix we mentioned in the previous section.  \texttt{beta\_hat} is the vector of regression coefficient estimates.  We can then construct the Wald statistic using matrix and compare it to the upper tail of $\chi^2_2$.  The degrees of freedom is $2$ since $L$ is a rank-$2$ matrix.  The resulting $p$-value is \texttt{0.00414}, which is little bit different from LRT and Pearson chi-squared test, but not too far off.
+
+\smallskip
+\noindent\textit{Question:} How do we write the \textit{R} code to test if group B and C have the same event probability?
+
+\smallskip
+Alternatively, we may use individual observation data to carry out the analysis:
+
+<<>>=
+# Prepare individual observation data
+data_ind_1 <- data_agg_1 %>%
+  pivot_longer(y1:y0, names_to = "y", names_prefix = "y", 
+               names_transform = list(y = as.integer),
+               values_to = "count") %>%
+  uncount(count)
+  
+head(data_ind_1)
+
+mod_ind_sat_1 <- glm(y ~ factor(group), family = binomial(), data = data_ind_1)
+mod_ind_null_1 <- glm(y ~ 1, family = binomial(), data = data_ind_1)
+
+summary(mod_ind_sat_1)
+exp(coef(mod_ind_sat_1))
+exp(confint.default(mod_ind_sat_1, level = 0.95))
+
+anova(mod_ind_null_1, mod_ind_sat_1, test = "LRT")
+@
+
+
+
+\subsection{Logistic Regression with Continuous Covariates}
+In the case where $X$ contains continuous variables, it is often the case that the number of covariate patterns is very close to the number of observations (unless you are willing to bin the continuous variables).  Therefore, we would have to rely on models on means, i.e. $g(\mu_i) = X_i\beta$ to reduce the number of parameters.  The estimation and inference procedure remains similar to that of limited covariate patterns, but with one caveat: the goodness-of-fit test based on deviance or Pearson chi-squared statistic does not perform well when the number of covariate patterns is large, because the expected frequencies of the contingency table would be small, and the approximations will tend to be poor.  
+
+\smallskip
+The most classic approach for this scenario is the \textbf{Hosmer-Lemeshow test}, which groups observations into categories based on their predicted probabilities, and then use Pearson chi-squared test to check for goodness-of-fit.  Typically, about $g = 10$ groups are used with approximately equal numbers of observations in each group.  The data aggregated by the groups would then look like \Cref{tab: cont_cat} where $K = g$.  A Pearson chi-squared statistic $X^2$ can then be calculated, where simulations have shown that asymptotically, under the null hypothesis of the model fitting the data well, $X^2 \sim \chi^2_{g-2}$.  Rejecting the null hypothesis indicates evidence that the model is ill-fitting.  
+
+\smallskip
+In the following we will demonstrate how the approach works with an example dataset, where we aim to predict whether or not a patient has diabetes using their age (\texttt{age}), 2-hour blood glucose level after a oral glucose tolerance test (\texttt{glucose}), body mass index (\texttt{mass}) and the number of times they have been pregnant (\texttt{pregnant}):
+<<>>=
+data("PimaIndiansDiabetes2", package = "mlbench")
+head(PimaIndiansDiabetes2)
+
+# Extract complete cases and relabel diabetes as 0 and 1
+complete <- complete.cases(PimaIndiansDiabetes2[,
+                c("diabetes", "age", "glucose", "mass", "pregnant")])
+data_cont <- PimaIndiansDiabetes2[complete,]
+data_cont$diabetes <- 0 + (data_cont$diabetes == "pos")
+mod_cont <- glm(diabetes ~ age + glucose + mass + pregnant, 
+                family = binomial(), data = data_cont)
+summary(mod_cont)
+@
+
+Notice here that if we focus on the odds ratio estimate for the variable \texttt{glucose}:
+
+<<>>=
+exp(coef(mod_cont))["glucose"]
+exp(confint.default(mod_cont)["glucose",])
+@
+
+This implies that each unit (mg/dL) increase of blood glucose level would be projected to increase the odds of by $3.68\%$ ($95\%$ confidence interval: ($2.93\% \sim 4.31\%$)).  However, this may not be useful since a $1$ mg/dL change in blood glucose is immaterial clinically.  A more impactful way would be to report how the odds would increase per $10$ mg/dL increase in blood glucose level.  This can be obtained by:
+
+<<>>=
+exp(coef(mod_cont))["glucose"]^10
+exp(confint.default(mod_cont)["glucose",])^10
+@
+
+That is, the odds would be increased by $43.60\%$ ($95\%$ confidence interval: ($34.04\% \sim 53.83\%$)) per $10$ mg/dL increase in blood glucose level.  Note that although the numbers have gone larger, the $p$-value for significance for the \texttt{glucose} would not change.  Now let us try and use the Hosmer-Lemeshow test to determine if this model is ill-fitting:
+
+
+<<>>=
+# Calculate fitted probabilities and group the observations by quantiles
+data_cont$fitted <- fitted.values(mod_cont, data_cont)
+data_cont$group <- cut(data_cont$fitted, 
+                       quantile(data_cont$fitted, (0:10)/10), 
+                       include.lowest = T)
+data_hl <- data_cont %>% 
+  group_by(group) %>% 
+  summarize(sum_prob = sum(fitted), sum_non_prob = sum(1-fitted),
+            sum_event = sum(diabetes == 1), sum_non_event = sum(diabetes == 0))
+data_hl
+hl <- sum((data_hl$sum_event - data_hl$sum_prob)^2/data_hl$sum_prob) + 
+  sum((data_hl$sum_non_event - data_hl$sum_non_prob)^2/data_hl$sum_non_prob)
+hl
+1-pchisq(hl, 8)
+@
+
+In the code above, \texttt{fitted.values} produces the predicted event probabilities of the original data based on the fitted model, whose quantiles are used to divide the observations into $10$ groups.  The fourth and fifth columns of \texttt{data\_hl} is the contingency table constructed based on the $10$ groups, and the second and third columns are the expected number of each cell in the contingency table calculated by summing the fitted probabilities of events (non-events) among observations within that cell.  Finally, \texttt{hl} is the Peason chi-square type statistic, which is compared against a Chi-squared distribution with degrees of freedom of $10-2 = 8$.  The test showed no evidence of the model being ill-fitting.  A caution here is that Hosmer-Lemeshow test is known to be low-powered under small sample size, and its conclusion may depend largely on the number of groups $g$ chosen.  
+
+\subsection{Model Selection with Information Criteria}
+In the previous sections, we have demonstrated how to compare the fit between nested models with LRTs.  However, these tests are designed to test if one model has significantly better fit than the other, but \textit{not} to determine if one would have better predictive performance than the other.  In addition, for model that are not nested, eg.
+\begin{equation}
+    M_0: g(\mu) = \beta_0 + \beta_1 x_1 + \beta_2 x_2
+    M_1: g(\mu) = \beta_0 + \beta_3 x_3 + \beta_4 x_4 + \beta_5 x_5
+\end{equation}
+Analytically we have no asymptotic tests that compares the fit between $M_0$ and $M_1$, and we may nned to rely on parameteric bootstraps to really come up with a test.
+
+\smallskip
+If what we care about is predictive performance, then there are two commonly used criteria that can help use choose between models, even if they are not nested:
+\begin{gather}
+    \text{Akaike Information Criterion (AIC): } -2\ell + 2p\\
+    \text{Bayesian / Schwartz Information Criterion (BIC / SIC):} -2\ell + p \log n
+\end{gather}
+Here $\ell$ is the log-likelihood, $p$ is the number of parameters and $n$ is the number of observations.  Intuitively, since we would want the fit to be better, we would want a model with larger $\ell$, i.e. smaller $-2\ell$.  However, for a model with larger number of parameters, the chance of overfitting also increases.  Therefore, AIC and BIC penalizes the number of parameters by a factor of $2$ and $\log n$ so that the model selected would be less likely to exhibit overfit.
+In fact, \textit{Mallow's $C_p$} in linear regression is a special case of AIC.
+
+\smallskip
+Comparison between usage of AIC and BIC has been done for a handful of models.  A general consensus is that when the true model is within the pool of candidate models, then using BIC has better chance of finding it.  However, even if the true model is not within the pool of candidate models, AIC has the best chance of finding the \textit{best approximating model}.  There are also literature showing that AIC comparison is asymptotically equivalent to leave-one-out cross validation in linear regression.

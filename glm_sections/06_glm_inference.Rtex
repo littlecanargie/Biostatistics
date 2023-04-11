@@ -1,0 +1,151 @@
+Now we know how to estimate GLMs with MLE, the next question is then how do we do inference on GLMs?  The inference we are interested in is basically the same as linear models (1) How do we test if any linear combination of regression coefficients $\beta$ is equal to a given value (mostly $0$)? How do we construct confidence intervals for them? (2) How do we compare the fit of two models? (3) How do we determine if the model is well-fitted or not?  In the following, we will tackle these three queries one by one.
+
+\subsection{Asymptotic distribution for estimated regression coefficients}
+In linear regression, we are able to derive the \textit{exact} distribution of regression coefficient estimators using $t$-distributions.  However, in GLMs, we do not have the luxury of exact distributions.  Instead, we have to look back to theories on MLEs and resort to asymptotics, i.e. looking into the case where the sample size is large.  A good property of MLEs that can help us a ton is that under certain regulatory conditions (which GLMs often satisfy), MLEs are \textit{consistent} estimators.  That is, suppose $\beta_0$ is the true value of the regression coefficients, and let $\hat{\beta}_n$ be the MLE estimator of $\beta$ based on sample size $n$, then for all entries of the vector, we have 
+\begin{equation}
+    \lim_{n \rightarrow \infty}\P(|\hat{\beta}_{ni} - \beta_{0i}| > \varepsilon) = 0, \quad \forall \varepsilon > 0
+\end{equation}
+Roughly speaking, as the sample size $n$ grows large, there will be high probability that $\hat{\beta}_n$ will be within a tight vicinity of $\beta$.  This in turn enables us to use Taylor approximations on functions of $\beta$ to extract important inference detail.  We first start with the score function $U(\beta) = \sum_i U_i(\beta)$, where we try to approximate $U(\beta_0)$.  Since the MLE estimator $\hat{\beta}$ is consistent, asymptotically we can use first-order approximation to approximate $U(\beta_0)$ as follows:
+\begin{align}
+    U(\beta_0) &\approx U(\hat{\beta}) + U'(\hat{\beta})(\beta_0 - \hat{\beta})\\
+    &= U(\hat{\beta}) - I(\hat{\beta})(\beta_0 - \hat{\beta}) \label{eq: U_obs_I}\\
+    &\approx U(\hat{\beta}) - \mathcal{I}(\hat{\beta})(\beta_0 - \hat{\beta}) \label{eq: U_Fisher_I}
+\end{align}
+where in \Cref{eq: U_obs_I} we used the definition of observed information as the negative second derivative of log-likelihood function, and in \Cref{eq: U_Fisher_I} we approximate the observed information with its expectation, i.e. Fisher information.  Now, using the fact that the $\hat{\beta}$ is found by letting $U(\hat{\beta}) = 0$, we have
+\begin{equation}
+    \hat{\beta} - \beta_0 \approx \mathcal{I}^{-1}(\hat{\beta})U(\beta_0)
+\end{equation}
+Recall that we have shown 
+\begin{gather}
+    \E[U_i(\beta_0)] = 0\\
+    var[U_i(\beta_0)] = \mathcal{I}_i(\beta_0)
+\end{gather}
+Since each $U_i$ comes from independently distributed $Y_i$, and $U(\beta_0) = \sum_i U_i(\beta_0)$, we have $\E[U(\beta_0)] = 0$ and $var[U(\beta_0)] = \sum_i \mathcal{I}_i(\beta_0) := \mathcal{I}(\beta_0)$.  Under certain regulatory conditions, we can apply central limit theorem for independent yet non-identically distributed variables and yield:
+\begin{equation}
+    \mathcal{I}^{-1/2}(\beta_0) U(\beta_0) \xrightarrow[]{d} N(0, \boldsymbol{I}_p)
+\end{equation}
+Therefore, approximately
+\begin{equation}
+    \mathcal{I}^{1/2}(\hat{\beta}) (\hat{\beta} - \beta_0) \approx \mathcal{I}^{-1/2}(\hat{\beta})U(\beta_0) \xrightarrow[]{p} \mathcal{I}^{-1/2}(\beta_0)U(\beta_0) \xrightarrow[]{d} N(0, \boldsymbol{I}_p)
+\end{equation}
+so we have the asymptotic distribution of $\hat{\beta}$:
+\begin{equation}
+    \mathcal{I}^{1/2}(\hat{\beta}) (\hat{\beta} - \beta_0) \xrightarrow[]{d} N(0, \boldsymbol{I}_p)
+\end{equation}
+or more loosely,
+\begin{equation}
+    \hat{\beta} \rightsquigarrow N(\beta_0, \mathcal{I}^{-1}(\hat{\beta})) \label{eq: asym_beta}
+\end{equation}
+where we write $\rightsquigarrow$ for "asymptotically distributed as".
+
+\smallskip
+Based on \Cref{eq: asym_beta}, we may now construct tests and confidence intervals for any linear combination for $\beta$.  Most generally, suppose we are interested in $L\beta_0$, where $L$ is an $m \times p$ matrix of rank $m$, then the asymptotic distribution for $L\hat{\beta}$ under the null hypothesis would be 
+\begin{equation}
+    L\hat{\beta} \rightsquigarrow  N(L\beta_0, L\mathcal{I}^{-1}(\hat{\beta})L^\top) \label{eq: normal_beta}
+\end{equation}
+Consequently, we have
+\begin{equation}
+    (L\hat{\beta}-L\beta_0)^\top (L\mathcal{I}^{-1}(\hat{\beta})L^\top)^{-1} (L\hat{\beta}-L\beta_0) \xrightarrow[]{d} \chi_m^2 \label{eq: chi_beta}
+\end{equation}
+Based on \Cref{eq: chi_beta}, we may construct asymptotic tests regarding to $L\beta_0$.  For example, suppose we would like to test the null hypothesis $L\beta_0 = c$ where $c$ is a constant vector, then we may calculate the following statistic
+\begin{equation}
+    W := (L\hat{\beta}-c)^\top (L\mathcal{I}^{-1}(\hat{\beta})L^\top)^{-1} (L\hat{\beta}-c) \label{eq: Wald_stat}
+\end{equation}
+which has an asymptotic null distribution of $\chi_m^2$.  Since $W$ will be larger as $L\hat{\beta}$ is farther from $c$, we can reject $H_0$ when $W > \chi_{m, 1-\alpha}^2$, where $\alpha$ is the significance level.  This is called the \textit{Wald test}, based on the work of statistician Abraham Wald.  
+
+\smallskip
+As a special case, if $L$ is a row vector, then based on \Cref{eq: normal_beta},
+\begin{equation}
+    \frac{L\hat{\beta}-L\beta_0}{\sqrt{L\mathcal{I}^{-1}(\hat{\beta})L^\top}} \xrightarrow[]{d} N(0, 1) \label{eq: z_beta}
+\end{equation}
+So to test the null hypothesis $H_0: L\beta_0 = c$, we may calculate the follow Wald statistic:
+\begin{equation}
+    W := \frac{L\hat{\beta}-c}{\sqrt{L\mathcal{I}^{-1}(\hat{\beta})L^\top}}
+\end{equation}
+and reject $H_0$ when $|W|$ exceeds $Z_{1-\alpha/2}$, or output a \textit{p}-value of $2 \times (1-\Phi(|W|))$.  In addition, based on \Cref{eq: z_beta}, we have
+\begin{equation}
+    \P\left(-Z_{1-\alpha/2}<\frac{L\hat{\beta}-L\beta_0}{\sqrt{L\mathcal{I}^{-1}(\hat{\beta})L^\top}} < Z_{1-\alpha/2}\right) \xrightarrow[]{p} 1-\alpha
+\end{equation}
+So we may construct the following confidence interval for asymptotic $(1-\alpha)$ coverage of $L\beta_0$
+\begin{equation}
+    (L\hat{\beta}-Z_{1-\alpha/2}\sqrt{L\mathcal{I}^{-1}(\hat{\beta})L^\top}, L\hat{\beta}+Z_{1-\alpha/2}\sqrt{L\mathcal{I}^{-1}(\hat{\beta})L^\top})
+\end{equation}
+
+\smallskip
+In most commercial packages, the confidence intervals and $p$-values for regression coefficients are calculated with Wald-type statistics / pivotal quantities.  However, most packages (including \textit{R}) will not explicitly list out $\mathcal{I}^{-1}(\hat{\beta})$, so to do inference on linear combinations of coefficients, some manual work will be needed most of the time.
+
+\subsection{Model comparison with likelihood ratio test}
+In the previous subsection, we approximated the score function $U(\beta_0)$ using Taylor expansion starting from the MLE $\hat{\beta}$.  We can also do second-order Taylor expansion of the likelihood function $\ell(\beta_0)$ and yield
+\begin{align}
+    \ell(\beta_0) &\approx \ell(\hat{\beta}) + \ell'^\top(\hat{\beta})(\beta_0-\hat{\beta}) + \frac{1}{2} (\beta_0 - \hat{\beta})^\top\ell''(\hat{\beta})(\beta_0 - \hat{\beta})\\
+    &= \ell(\hat{\beta}) + \frac{1}{2} (\beta_0 - \hat{\beta})^\top\ell''(\hat{\beta})(\beta_0 - \hat{\beta}) \label{eq: LR_U_zero}\\
+    &= \ell(\hat{\beta}) - \frac{1}{2} (\beta_0 - \hat{\beta})^\top I(\hat{\beta})(\beta_0 - \hat{\beta}) \label{eq: LR_obs_I}\\
+    &\approx \ell(\hat{\beta}) - \frac{1}{2} (\hat{\beta} - \beta_0)^\top \mathcal{I}(\hat{\beta})(\hat{\beta} - \beta_0) \label{eq: LR_Fisher_I}
+\end{align}
+where \Cref{eq: LR_U_zero} is true since $\hat{\beta}$ is found by letting the derivative of the log-likelihood function be zero, \Cref{eq: LR_obs_I} is using the definition of observed information and \Cref{eq: LR_Fisher_I} approximates the observed information with Fisher information.  Rearranging the above and we get
+\begin{equation}
+    (2\ell(\hat{\beta}) - 2\ell(\beta_0)) \approx (\hat{\beta} - \beta_0)^\top \mathcal{I}(\hat{\beta})(\hat{\beta} - \beta_0) \xrightarrow[]{d} \chi_p^2
+\end{equation}
+where the last converging distribution comes from setting $L = \boldsymbol{I}_p$ in \Cref{eq: chi_beta}.  This results also gives us an alternative asymptotic test for $H_0: \beta = \beta_0$.  When $H_0$ is not true, $\hat{\beta}$ would give a vastly better fit than $\beta_0$, reflected by a large value of $2\ell(\hat{\beta}) - 2\ell(\beta_0)$.  So we may reject $H_0$ when $2\ell(\hat{\beta}) - 2\ell(\beta_0) > \chi^2_{p, 1-\alpha}$, where $\alpha$ is the significance level.  Note that 
+\begin{equation}
+    2\ell(\hat{\beta}) - 2\ell(\beta_0) = 2 \log \frac{L(\hat{\beta})}{L(\beta_0)}
+\end{equation}
+where $L$ is the likelihood function, so this test statistic is actually related to the ratio of likelihoods.  Therefore, we term it as the \textit{(log-)likelihood ratio statistic}, and the test is called \textit{likelihood ratio test} (LRT). 
+
+\smallskip
+Another way to look at the (log-)likelihood ratio statistic is that we are fitting two models: one with $\beta$ freely estimated by maximum likelihood (larger model), and one with $\beta$ fixed to $\beta_0$ with no free parameters left (smaller model).  The log-likelihood difference between these two models are subtracted and timed by 2, which under the null hypothesis that the smaller model is correct, should be asymptotically distributed as $\chi^2_p$, where $p$ is the difference of number of parameters between these two models.  This concept of comparing the (log-)likelihood of nested models can be generalized by a phenomenal theorem put forward by Samuel Wilks, which we elaborate below.
+
+\smallskip
+Suppose that we have two nested candidate models $M_1$ and $M_0$.  $M_1$ is the "larger" model with parameter vector $\theta$ of dimension $p$.  $M_0$ is the "smaller" model that is a special case of $M_1$ by adding constraints on $\theta$ so that the remaining degrees of freedom for the parameters is $q$ (of course $q < p$).  Now we use maximum likelihood to estimate both models and calculate their log-likelihood by plugging in the parameter estimates.  Then Wilks' theorem tells us that under certain regulatory conditions, 
+\begin{equation}
+    \Lambda := 2(\ell_{M_1}(\hat{\theta}_{M_1}) - \ell_{M_0}(\hat{\theta}_{M_0})) \xrightarrow[]{d} \chi_{p-q}^2
+\end{equation}
+In other words, if the difference of number of parameters between two nest models is $\nu$, then twice the log-likelihood difference between them would asymptotically follow $\chi_\nu^2$ under the null hypothesis that the smaller model is correct.  When the null hypothesis is \textit{incorrect}, implying the larger model has way better bit than the smaller model, the log-likelihood ratio statistic should be large.  Therefore, we reject the null hypothesis when the statistic exceeds $\chi_{\nu, 1-\alpha}^2$, where $\alpha$ is the significance level.
+
+\smallskip
+LRTs are used extensively in model selection. In statistical modelling, we strive to find a succinct model that has adequate fit.  If two models have similar fit to the data but one has less parameters than the other, then by the \textit{Occam's razor} rule, we would opt for the one with less parameters.  In LRT, when the null hypothesis is rejected, we would of course choose the larger model since it has better fit.  However, when we fail to reject the null hypothesis, then we would consider choosing the small model, since it is more concise and we do not have evidence that it performs worse than the larger model.
+
+\smallskip
+Note that now we have both LRT and Wald test at hand, we have two different strategies that can test if a subvector $\theta^*$ of our parameter vector $\theta$ equals to a predetermined value (i.e. $H_0: \theta^* = c$).  One is to fit a model $M_1$ estimating the whole $\theta$ vector, and use Wald test (\Cref{eq: Wald_stat}) to directly test if $\theta^* = c$.  Another is to fit another model $M_0$ that constrains the subvector $\theta^*$ to be $c$ and use LRT between $M_1$ and $M_0$.  These two approach are asymptotically equivalent, but extensive simulation studies have shown that in finite samples, LRT performs better than Wald test, and it is also harder to carry out multivariate Wald test in commercial packages.  Therefore, for this type of test, LRT is almost always preferred.
+
+\subsection{Deviance for goodness-of-fit}
+Data modelling is a continous process.  At times we would like to know if our model adequately fits the data, so that we could modify our model if the fit is not satisfactory.  Therefore, we require a statistic that measures the difference of degree of fit between our current model and the saturated model (we will talk about its definition later).  When the current model has significantly worse fit than the saturated model, we deem that the current model does not fit well and model modification is needed.  In contrast, when the difference in fit is non-significant between the current model and the saturated model, we would at least some confidence that the model is doing its job.
+
+\smallskip
+In GLMs, one way to quantify goodness-of-fit (or badness-of-fit) is the \textit{deviance} statistic, which is just the log-likelihood ratio statistic comparing the current model and the saturated model.  Before we lay out the formula for deviance, we need to define what a saturated model is.  Recall the basic structure of GLMs:
+\begin{gather}
+    Y_i|X_i \sim f(\theta_i, \phi)\\
+    g(\mu_i) := \eta_i = X_i\beta
+\end{gather}
+Here each observation has its own $\theta_i$, but $\theta_i$ is not freely estimated -- it is restricted by its relation to $\beta$.  Therefore, most of the time $\bY_i$ would \textit{not} be identical to the predicted $\E[Y_i|X_i] = g^{-1}(X_i\hat{\beta})$.  In the saturated model, however, we insert as many free $\theta_i$ as possible (one for each value of $X_i$).  For example, suppose $Y_i | X_i$ follows a Poisson distribution and $X_i$ is supposed to differ between observations, then each observation would have a rate parameter $\lambda_i$.  Since $\E[Y_i | X_i] = \lambda_i$, the estimated $\lambda_i$ in the saturated model would just be $\hat{\lambda}_{\text{(sat)}i} = \bY_i$.  The log-likelihood contributed by observation $i$ would then be 
+\begin{equation}
+    \ell_{\text{(sat)}i} = \bY_i \log \hat{\lambda}_{\text{(sat)}i} - \hat{\lambda}_{\text{(sat)}i} - \log \bY_i! = \bY_i \log \bY_i - \bY_i - \log \bY_i!
+\end{equation}
+By convention, when $\bY_i = 0$ we let $0 \log 0 = 0$.  The total log-likelihood for the saturated model would then be 
+\begin{equation}
+    \ell_{\text{(sat)}} = \sum_i (\bY_i \log \bY_i - \bY_i - \log \bY_i!)
+\end{equation}
+Here we can see that since each observation has its own parameter $\lambda_i$, we have a total of $n$ parameters, which is the maximal number of parameters we can put into a data of size $n$, hence the name \textit{saturated} model.  However, note that in the case where the predictors are categorical, the saturated model may not have $n$ parameters since there are limited possible value combinations for $X$.  For example, if $X$ only contains three dummy variables coding a three-category grouping, then there are only three possible value configurations for $X$, so the number of parameters for the saturated model would be $3$.
+
+\smallskip
+Now suppose using maximum likelihood, our current model estimates the rate parameter for observation $i$ is $\hat{\lambda}_i$, then the total log-likelihood for the model is
+\begin{equation}
+    \ell = \sum_i (\bY_i \log \hat{\lambda}_i - \hat{\lambda}_i - \log \bY_i!)
+\end{equation}
+So we have the LRT statistic comparing our model and the saturated model as 
+\begin{equation}
+    D = 2(\ell_{(sat)} - \ell) = 2\sum_i \Big[\bY_i \log \Big( \frac{\bY_i}{\hat{\lambda}_i} \Big) - (\bY_i - \hat{\lambda}_i) \Big] = 2\Big[\sum_i \bY_i \log \Big( \frac{\bY_i}{\hat{\lambda}_i} \Big) - \sum_i (\bY_i - \hat{\lambda}_i) \Big]
+\end{equation}
+In GLMs with intercepts, the grand mean of outcome is well-calibrated, so that $\frac{1}{n}\sum_i \bY_i = \frac{1}{n} \sum_i \hat{\mu}_i$.  In this case, the LRT statistics can be further reduced to 
+\begin{equation}
+    D = 2\sum_i \bY_i \log \Big( \frac{\bY_i}{\hat{\lambda}_i} \Big)
+\end{equation}
+Under the null hypothesis that our current model fits the data well, $D$ should have an asymptotic distribution of $\chi_{m-p}^2$ based on the LRT theory, where $m$ and $p$ are the numbers of parameters in the saturated model and our current model.  As the lack of fit for our model becomes greater, $D$ would be larger (since the log-likelihood for our model would be smaller), so we reject the null hypothesis and claim our model does not fit the data well when $\Lambda > \chi^2_{m-p, 1-\alpha}$, where $\alpha$ is the significance level. 
+
+\smallskip
+Note that LRT between two models will sometimes be framed as comparison between the deviance of the models.  Suppose a larger model 1 and smaller model 2 have log-likelihood $\ell_1$, $\ell_2$ and deviance $D_1$, $D_2$, then we have the relation
+\begin{align}
+    D_1 &= 2(\ell_{\text{sat}} - \ell_1)\\
+    D_2 &= 2(\ell_{\text{sat}} - \ell_2)
+\end{align}
+So the log-likelihood ratio statistic comparing the two models would be $\Lambda = 2(\ell_1 - \ell_2) = D_2 - D_1$.  That is, the statistic can be seen as subtracting the deviance of the larger model from the smaller model.  The null distribution of the statistic remains the same, which is a chi-squared distribution with degrees of freedom equal to the difference of number of parameters between the two models.

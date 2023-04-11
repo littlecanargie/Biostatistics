@@ -1,0 +1,29 @@
+In the previous section, we constructed the OLS estimator from the intuition of minimizing the sum of squared residuals, after which we added the homoscedasticity and normality assumptions to ensure the OLS estimator is UMVUE.  However, we can also work backwards and assume normality (and possibly homoscedasticity) first and try to come up with an estimator from it.  In this case, we start from knowing the exact distribution of $Y$, so we have the luxury to work with likelihoods and derive maximum likelihood estimators (MLEs) to estimate $\beta$.
+
+\smallskip
+We first note that equivalently, we can also write \Cref{eq: LM_mean,eq: LM_error} as 
+\begin{gather}
+    Y_i | X_i \sim f(\theta_i) \label{eq: LM_dist}\\
+    \E[Y_i|X_i] := \mu_i = X_i\beta \label{eq: LM_eta}
+\end{gather}
+so that $f$ is an arbitrary distribution with parameters $\theta$, with its mean $\mu$ assumed to be equal to $X\beta$.  In the homoscedastic linear regression case, we let $f$ be a normal distribution with parameters $\theta = \T{(\mu, \sigma^2)}$ and $\sigma^2$ shared among observations, so that 
+\begin{gather}
+    Y_i | X_i \sim N(\mu_i, \sigma^2) \label{eq: NLM_dist}\\
+    \E[Y_i|X_i] = \mu_i = X_i\beta \label{eq: NLM_eta}
+\end{gather}
+This is equivalent to just writing
+\begin{equation}
+    Y_i | X_i \sim N(X_i\beta, \sigma^2)
+\end{equation}
+Therefore, now we can write the log-likelihood for the observed data $(\bY, \bX)$, which is,
+\begin{equation}
+    \ell(\beta, \sigma^2) = -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum_i (\bY_i - \bX_i\beta)^2 = -\frac{n}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\T{(\bY - \bX\beta)}(\bY - \bX\beta)
+\end{equation}
+We can obtain the maximum likelihood estimators for $\beta$ and $\sigma^2$ by setting $\partial \ell / \partial \beta$ and $\partial \ell / \partial \sigma^2$ to zero (In theory we have to also look at second derivatives to ensure we're obtaining the maximum, but here we defer that).  The former yields:
+\begin{equation}
+    \left.\frac{\partial \ell}{\partial \beta}\right|_{\beta = \hat{\beta}, \sigma^2 = \hat{\sigma}^2} = -\frac{1}{\hat{\sigma}^2}(\T{\bX}\bX\hat{\beta}-\T{\bX}\bY) = 0
+\end{equation}
+So we have the MLE for $\beta$, $\hat{\beta}=(\T{\bX}\bX)^{-1}\T{\bX}\bY$, which is exactly the same as the OLS estimator.
+
+\smallskip
+In later sections, we will talk about statistical properties of tests and estimates based on MLE.  Unfortunately, most these properties are based on asymptotics, meaning that we only have a grasp of how MLE-related inference will behave in general when the sample size is large.  Therefore, given the rich literature on the \textit{exact} behavior of tests and estimates in linear models (a lot of then based on $t$ and $F$ distributions), the reformulation to maximum likelihood estimation above may seem unfruitful.  However, our effort serves as a bridge to extend linear models to non-normal outcomes, under which MLE will be the preferred estimation methods and we will nearly always rely on asymptotics to do inference.

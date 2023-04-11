@@ -1,0 +1,172 @@
+In the previous section, we put forward two problems in fitting non-normal outcomes with linear regression: (1) problems in the mean component, which stems from limited possible values for the outcome mean, and (2) problems in the random component, which stems from the heteroscedaticity naturally introduced by the distribution of the outcome.  In generalized linear model, these two problems are addressed by specifying suitable outcome distributions and adequately transformed mean components.  Namely, we have the general model structure:
+\begin{gather}
+    Y_i | X_i \sim f(\theta_i) \label{eq: GLM_dist}\\
+    g(\mu_i) = \eta_i := X_i\beta \label{eq: GLM_eta}
+\end{gather}
+where $\mu_i := \E[Y_i|X_i]$ is the mean outcome of observation $i$ given $X_i$. 
+
+\smallskip
+Compared with the linear model structure \Cref{eq: NLM_dist,eq: NLM_eta}, we can see that \Cref{eq: GLM_dist} allows $Y_i|X_i$ to have a distribution other than normal distribution, which address the random component problem.  In principle, $f(.)$ can be any distribution that fits $Y_i|X_i$, but to guarantee good statistical behavior of MLEs and ease analytical derivation, we often assume $f(.)$ belongs to a broad family of distributions called the \textit{exponential family}.  We will talk more about this in the next subsection.
+
+\smallskip
+\Cref{eq: GLM_eta} maps $\mu_i$ to $X_i\beta$ with a function $g(.)$, so that they do not need to share the same support like linear models do.  Here, $g(.)$ is chosen so that it is \textit{strictly monotone}, \textit{differentiable} and preferably \textit{bijective} from the support of $\mu_i$ to $\mathbb{R}$.  The strict monotonicity avoids identifiability problems of $\beta$ and preserves the ranking of $X\beta$, i.e. letting observations with larger $X_i\beta$ also have larger mean of $Y_i$ (or the other way around).  The differentiability ensures that we can differentiate the log-likelihood function during during maximum likelihood estimation, and that the maximum occurs at where the partial derivative is zero.  When there is bijectivity from the support of $\mu_i$ to $\mathbb{R}$, $g(.)$ is invertible and each value for $X_i\beta$ corresponds to a value for $\mu_i$.  We will talk about commonly used link function under different types of outcome in later subsections.  Note that in later sections when applicable, we automatically assume that all distributions describing $Y$ is actually referring to the conditional distribution $Y|X$, so we omit $|X$ for brevity.
+
+\subsection{Exponential Family Distributions}
+The definition of exponential family distributions is intuitive: suppose the probability distribution (mass) function of a random variable $Y$ is $f(y; \theta)$, where $\theta$ is the parameter.  An initial naïve construction of the logarithm of $f(y; \theta)$ assumes that it contains two additive parts:
+\begin{equation}
+    \log f(y; \theta) = \_\_\_\_ + C(\theta) + D(y)
+\end{equation}
+We then add some "interactions" between $y$ and $\theta$, and the most simple interaction would be a multiplication between functions of them:
+\begin{equation}
+    \log f(y; \theta) = A(y)B(\theta) + C(\theta) + D(y) \label{eq: exp_fam}
+\end{equation}
+or, equivalently,
+\begin{equation}
+    f(y; \theta) = \exp[A(y)B(\theta) + C(\theta) + D(y)]
+\end{equation}
+Any distribution with probability distribution (mass) function express-able as above belongs to the exponential family.  In the case where $\theta$ is a vector of length $p$, then the definition becomes
+\begin{equation}
+    f(y; \theta) = \exp\Big[\sum_{i=1}^p A_i(y)B_i(\theta) + C(\theta) + D(y)\Big]
+\end{equation}
+This definition may seem very restricted at first glance, but surprisingly, a lot of common distributions actually belongs to the exponential family, to name a few:
+\begin{multicols}{2}
+    \begin{itemize}
+        \item Normal
+        \item Bernoulli
+        \item Binomial (known number of exps)
+        \item Poisson
+        \item Negative binomial (known number of fails)
+        \item Gamma
+        \item Chi-square
+        \item Exponential
+        \item Log-normal
+        \item Inverse Gaussian
+    \end{itemize}
+\end{multicols}
+
+\smallskip
+Now let's take a closer look at \Cref{eq: exp_fam}, the log-likelihood of one-parameter exponential family.  This log-likelihood can be greatly simplified if we could reduce $A(y)B(\theta)$ into just $y\theta$.  Fortunately, most of the time $A(.)$ and $B(.)$ are both invertible, so we can achieve this by slightly tweaking the parameter and the outcome.
+
+\smallskip
+For $B(\theta)$ to reduce to $\theta$, we can just reparameterize the parameter so that $B(\theta)$ becomes the "new" $\theta$.  For example, in a Bernoulli distribution with probability parameter $p$, the log-likelihood can be written as 
+\begin{align}
+    \log f(y; p) &= \log (p^y(1-p)^{1-y}) \nonumber \\
+    &= y \log p + (1-y) \log (1-p) \nonumber \\
+    &= y \log \frac{p}{1-p} + \log(1-p)
+\end{align}
+therefore we have $B(p) = \log \frac{p}{1-p}$.  Now we treat $\theta = \log \frac{p}{1-p}$ as our new parameter and the log-likelihood can be rewritten as
+\begin{equation}
+    \log f(y; p) = y \theta - \log(e^\theta + 1)
+\end{equation}
+Since setting $B(\theta)$ as the new parameter would simplify the log-likelihood and ease future calculation of moments, $B(\theta)$ is often termed as the \textit{natural parameter} or \textit{canonical parameter}.
+
+\smallskip
+For $A(y)$ to reduce to $y$, we can transform the outcome so that we are modelling $A(Y)$ instead of $Y$.  The log-likelihood for $A(Y)$ would need to include an extra term due to variable transformation, but this term would only depend on $y$ and can be absorbed into $D(y)$.  This new log-likelihood would have $A(y)$ as $y$, and is said to be of \textit{canonical form}.
+
+\smallskip
+In generalized linear model, we focus on the \textit{one-parameter canonical exponential family with dispersion}, where the log probability density (mass) distribution can be expressed as
+\begin{equation}
+    \log f(y; \theta, \phi) = \frac{y \theta - b(\theta)}{a(\phi)} + c(y,\phi)
+\end{equation}
+Here $\phi$ is the dispersion parameter, a parameter that is not of our prime interest but affects the variance of the outcome.  Sometime $\phi$ inevitably appears when we reduce a two-parameter exponential family into a one-parameter exponential family, eg. fixing the variance of a normal distribution or the shape of a gamma distribution.  By convention, we assume that $\phi$ is known and does not estimate it, at least initially.  For example, the log probability density function for normal distribution $N(\mu, \sigma^2)$ can be written as:
+\begin{align}
+    \log f(y; \mu, \sigma^2) &= -\frac{1}{2}\log(2\pi\sigma^2)-\frac{(y-\mu)^2}{2\sigma^2} \nonumber\\
+    &= \frac{y\mu - \frac{\mu^2}{2}}{\sigma^2} + \Big(-\frac{1}{2}\log(2\pi\sigma^2) - \frac{y^2}{2\sigma^2} \Big)
+\end{align}
+where $\phi := \sigma^2$ naturally appear in the denominator.  Several common distributions that belong to the one-parameter canonical exponential family with dispersion are listed below:
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|ccccc}
+         & $N(\mu, \sigma^2)$ & $Bern(p)$ & $Bin(n, p)/n$ & $Pois(\lambda)$ & $Gamma(\alpha, \beta)$ \\
+        \hline
+        $\theta$ & $\mu$ & $\log \frac{p}{1-p}$ & $\log \frac{p}{1-p}$ & $\log \lambda$& $-1/(\alpha\beta)$ \\
+        $\phi$ & $\sigma^2$ & $1$ & $1$ & $1$ & $1/\alpha$\\
+        $b(\theta)$ & $\theta^2/2$ & $\log(e^\theta + 1)$ & $n\log(e^\theta + 1)$ & $e^\theta$ & $-\log(-\theta)$\\
+        $c(y, \phi)$ & $-[\log(2\pi\phi) - y^2 / \phi]/2$ & $1$ & $\log {n \choose y}$ & $-\log y!$ & $\log(y/\phi)/\phi - \log y - \log(\Gamma(1/\phi))$
+    \end{tabular}
+    \caption{Characteristics of common one-parameter canonical exponential family with dispersion (letting $a(\phi) = \phi$).  Gamma distribution is parameterized so that $\alpha$ is for shape and $\beta$ is for scale.}
+    \label{tab: exp_dist}
+\end{table}
+
+The definition of exponential family distributions implies that the support of $Y$ does not depend on the parameter $\theta$.  If otherwise, the probability density / mass function would have a term $I(y \in S(\theta))$ where $S(\theta)$ is a set dependent on $\theta$, and this would not fit the definition of exponential families.  With this property in mind, let us define two functions that are crucial in the inference of MLE:
+\begin{itemize}
+    \item \textbf{Log likelihood function}: $\ell(\theta; y) := \log f(y; \theta)$
+    \item \textbf{Score function}: $U(\theta; y) := \frac{\partial}{\partial \theta}\ell(\theta; y)$ 
+\end{itemize}
+Suppose we denote $\mathcal{X}_Y$ as the support for $Y$, then we can derive the mean of the score function:
+\begin{align}
+    \E_{Y \sim f(\theta)}[U(\theta; Y)] &= \int_{\mathcal{X}_Y} \Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big) f(y; \theta)dy\\
+    &= \int_{\mathcal{X}_Y} \Big(\frac{\partial}{\partial \theta}\log f(y; \theta)\Big) f(y; \theta)dy \\
+    &= \int_{\mathcal{X}_Y} \frac{\frac{\partial}{\partial \theta} f(y; \theta)}{f(y; \theta)}f(y; \theta)dy\\
+    &= \int_{\mathcal{X}_Y} \frac{\partial}{\partial \theta} f(y; \theta) dy\\
+    &= \frac{\partial}{\partial \theta}\int_{\mathcal{X}_Y}  f(y; \theta) dy \label{eq: u_mean_exch}\\
+    &= \frac{\partial}{\partial \theta} 1 = 0 \label{eq: u_mean}
+\end{align}
+where the exchange of partial differentiation and integration in \Cref{eq: u_mean_exch} is valid since the support of $Y$ does not depend on $\theta$.  Note that here the $\theta$ used to evaluate $U(\theta; Y)$ is the same as the $\theta$ driving the distribution of $Y$ from which expectation was taken.  That is, say $\theta_0$ is the true value for $\theta$, then this result only guarantees that the expectation of $U(\theta_0; Y)$ is $0$.  Plug in other values for $\theta$ in $U$ then the expectation will \textit{not} be $0$.
+
+\smallskip
+Based on the result above, we can derive another identity by differentiating $\E_{Y \sim f(\theta)}[U(\theta; Y)]$ again by $\theta$:
+\begin{align}
+    0 = \frac{\partial}{\partial \theta}\E_{Y \sim f(\theta)}[U(\theta; Y)] &= \frac{\partial}{\partial \theta}\Big[\int_{\mathcal{X}_Y} \Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big) f(y; \theta)dy\Big]\\
+    &= \int_{\mathcal{X}_Y} \frac{\partial}{\partial \theta}\Big[\Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big) f(y; \theta) \Big]dy \label{eq: u_var_exch}\\
+    &= \int_{\mathcal{X}_Y} \Big(\frac{\partial^2}{\partial \theta^2}\ell(\theta; y)\Big) f(y; \theta) + \Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big)\Big( \frac{\partial}{\partial \theta}f(y; \theta)\Big) dy\\
+    &= \int_{\mathcal{X}_Y} \Big(\frac{\partial^2}{\partial \theta^2}\ell(\theta; y)\Big) f(y; \theta) dy + \int_{\mathcal{X}_Y} \Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big)\frac{\frac{\partial}{\partial \theta}f(y; \theta)}{f(y; \theta)} f(y;\theta) dy\\
+    &= \int_{\mathcal{X}_Y} \Big(\frac{\partial^2}{\partial \theta^2}\ell(\theta; y)\Big) f(y; \theta) dy + \int_{\mathcal{X}_Y} \Big(\frac{\partial}{\partial \theta}\ell(\theta; y)\Big)^2 f(y;\theta) dy\\
+    &= \E_{Y \sim f(\theta)}\Big[\frac{\partial^2}{\partial \theta^2}\ell(\theta; Y)\Big] + \E_{Y \sim f(\theta)}[U^2(\theta; Y)] \label{eq: u_sq}
+\end{align}
+Here the exchange of partial differentiation and integration sign is used again in \Cref{eq: u_var_exch}.  Based on this result, we have the variance of the score function:
+\begin{align}
+    var_{Y \sim f(\theta)}[U(\theta; Y)] &= \E_{Y \sim f(\theta)}[U^2(\theta; Y)] - (\E_{Y \sim f(\theta)}[U(\theta; Y)])^2 \label{eq: u_var_pre}\\
+    &= \E_{Y \sim f(\theta)}[U^2(\theta; Y)] = -\E_{Y \sim f(\theta)}\Big[\frac{\partial^2}{\partial \theta^2}\ell(\theta; Y)\Big] \label{eq: u_var}
+\end{align}
+where \Cref{eq: u_var_pre} to \Cref{eq: u_var} is based on \Cref{eq: u_mean}, and the equal sign in \Cref{eq: u_var} is based on \Cref{eq: u_sq}.  The negative expecation of second derivative of log-likelihood function is an extremely imported quantity in likelihood inference, which is termed as the \textbf{Fisher information} notated as $\mathcal{I}(\theta)$.
+
+\smallskip
+Since for our family of distributions:
+\begin{align}
+    \frac{\partial\ell(\theta; Y)}{\partial\theta} &= \frac{Y-b'(\theta)}{a(\phi)}\\
+    \frac{\partial^2\ell(\theta; Y)}{\partial\theta^2} &= -\frac{b''(\theta)}{a(\phi)}
+\end{align}
+Using \Cref{eq: u_mean} we have:
+\begin{gather}
+    0 = \E_{Y \sim f(\theta)}\Big[\frac{\partial\ell(\theta; Y)}{\partial\theta}\Big] = \frac{\E(Y) - b'(\theta)}{a(\phi)}\\
+    \E(Y) := \mu = b'(\theta) \label{eq: y_mean}
+\end{gather}
+And using \Cref{eq: u_var} we have:
+\begin{gather}
+    var_{Y \sim f(\theta)}\Big[\frac{\partial}{\partial \theta}\ell(\theta; Y)\Big] = -\E_{Y \sim f(\theta)}\Big[\frac{\partial^2}{\partial \theta^2}\ell(\theta; Y)\Big]\\
+    \frac{var(Y)}{a^2(\phi)} = -\Big(-\frac{b''(\theta)}{a(\phi)}\Big)\\
+    var(Y) = b''(\theta)a(\phi) \label{eq: y_var}
+\end{gather}
+Apart from verifying that \Cref{eq: y_mean,eq: y_var} are true using \Cref{tab: exp_dist}, we can now see why it makes sense to call $\phi$ the \textit{dispersion parameter}: $\phi$ does not influence the conditional mean of $Y$, but only inflates (or shrinks) the conditional variance of $Y$.  This fact will be important we later talk about overdispersion, a measure for goodness (or in fact "badness") of fit of our GLM.
+
+\subsection{Link Functions and Canonical Links}
+As we have elaborated, the original purpose of the link function $g(.)$ is to map $\mu_i$ to $X_i\beta$, which has different range of possible values.  Under this sole purpose, there are actually multiple (if not infinitely many) link functions we can choose from, as long as it is strictly monotone, differentiable and does the mapping we desire.  The choice between these link functions are actually mostly out of customs in the field, and one may also use model fit indices to select between link functions.
+
+\smallskip
+Another purpose of link functions is to simplify the model to make likelihood maximization easier and more reliable.  Link functions of this kind are called \textit{canonical links}, which is determined by letting the natural parameter $\theta = X\beta$.  In this case, the log-likelihood becomes,
+\begin{equation}
+    \log f(y; x, \beta, \phi) = \frac{yx\beta - b(x\beta)}{a(\phi)} + c(y, \phi)
+\end{equation}
+which has a nice $yx\beta$ term so the derivative of log-likelihood with respect to $\beta$ for the first term does not involve chain rule.  We will talk about this more in the next section on estimation.  Since with the canonical link $g(\mu(\theta)) = X\beta = \theta$, we yield that the canonical link is given by inverting the function of $\mu$ on $\theta$, i.e. $g(.) = \mu^{-1}(.)$.  A word of caution is that, canonical links may not guarantee bijection between the support of $\mu$ to the real line, as we will see in Gamma distribution.  In the following, we will list some of the most commonly used links, categorized by the outcome distribution:
+\begin{itemize}
+    \item \textbf{Normal distribution}: 
+    \begin{itemize}
+        \item Identity link ($g(\mu) = \mu$): This is also the canonical link.
+    \end{itemize}
+    \item \textbf{Bernoulli distribution}:
+    \begin{itemize}
+        \item Logit link ($g(\mu) = \log \frac{\mu}{1-\mu}$): This link has the advantage of easy-to-interpret regression coefficients as log odds ratios (more about that in upcoming lectures), and is therefore prevalent in the biomedical and machine learning field alike, i.e. logistic regression.  It is also the canonical link.
+        \item Probit link ($g(\mu) = \Phi^{-1}(\mu)$): This link uses the inverse of normal cumulative distribution function as link function.  Probit link is more popular in social sciences and econometrics since it corresponds to assuming each subject has a score based on their $X$, and whenever their score adding a normal noise exceeds a threshold, the subject will experience an event.
+        \item Complementary log-log link ($g(\mu) = \log(-\log(1-\mu))$): This link is more prevalent in industrial statistics.
+    \end{itemize}
+    \item \textbf{Poisson distribution}:
+    \begin{itemize}
+        \item Log link ($g(\mu) = \log \mu$): This link is intuitive since it maps $\mu$, a positive real number to $(-\infty, \infty)$.  Under this link, the regression coefficients can be interpreted as log rate ratios (more about this in upcoming lectures).  It is also the canonical link.
+    \end{itemize}
+    \item \textbf{Gamma distribution}:
+    \begin{itemize}
+        \item Log link ($g(\mu) = \log \mu$): Since the mean of Gamma distribution is also a positive number, it makes sense to use the log link.  However, this is \textit{NOT} the canonical link for Gamma distribution.  Nevertheless, log link is still often used for its coefficient interpretability (log-ratio of mean outcome).
+        \item Negative reciprocal link ($g(\mu) = -1 / \mu$): This is Gamma distribution's canonical link, which can be verified by seeing in Gamma distribution, $\mu = -1/\theta$.  However, this link does not map positive numbers to the real line, so we would predict subjects with positive $X\beta$ to have negative mean outcomes, which is sometimes undesirable. It is harder to interpret the regression coefficients under this link.
+    \end{itemize}
+\end{itemize}

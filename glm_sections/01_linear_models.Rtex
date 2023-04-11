@@ -1,0 +1,40 @@
+To get into generalized linear models, first we do a brief recap on linear models.   Suppose we want to model the relationship between \textit{one} outcome variable and \textit{multiple} explanatory variables.  We introduce the following notations:
+\begin{itemize}
+    \item $Y$ is the random variable for the outcome of interest
+    \item $X = (1, X_1, X_2, ..., X_{p-1})$ is the random \textit{row} vector of length $p$ for the explanatory variables. We let the first variable be fixed as $1$ to automatically include the intercept term.
+    \item $\beta = (\beta_0, \beta_1, \beta_2, ..., \beta_{p-1})^\top$ is the regression coefficient vector, where $\beta_0$ is the intercept and $\beta_k$ is the regression coefficient for $X_k$
+    \item $\varepsilon$ is the random variable for error
+\end{itemize}
+The basic and minimal assumption for (multiple) linear regression is then
+\begin{gather}
+    Y = X \beta + \varepsilon \label{eq: LM_mean}\\
+    \E[\varepsilon | X] = 0 \label{eq: LM_error}
+\end{gather}
+We can see that conditional of $X$, 
+\begin{align}
+    \E[Y|X] &= \E[X \beta + \varepsilon|X] = X \beta + \E[\varepsilon | X] = X\beta \\
+    var[Y | X] &= var[X \beta + \varepsilon|X] = var[\varepsilon|X]
+\end{align}
+Therefore, this formulation simply decomposes $Y$ into the \textit{mean component} $X\beta$ and the \textit{random component} $\varepsilon$, and the only assumption made is \textit{the mean of $Y$ conditional on $X$ is a linear combination of its elements}.  Note that the mean of $\varepsilon$ constrained to be $0$ is to ensure the identifiability of $\beta_0$.
+
+\smallskip
+The most straightforward estimator for $\beta$ is the ordinary least squares (OLS) estimator, which finds $\hat{\beta}$ that minimizes sum of squared residuals, $\T{(Y-X\hat{\beta})}(Y-X\hat{\beta})$.  Formally, suppose we draw \textbf{independent} samples from $(Y, X)$ and yield the sample vector and matrix $(\bY, \bX)$, with $\bX$ assumed to be rank $p$, then the OLS estimator is given by
+\begin{equation}
+    \hat{\beta} = \argmin_\beta \T{(\bY-\bX\beta)}(\bY-\bX\beta) =  (\T{\bX}\bX)^{-1}\T{\bX}\bY
+\end{equation}
+The OLS estimator has a bunch of good properties, but note that some properties only hold under additional assumptions:
+\begin{enumerate}
+    \item Unbiasedness: It can be easily shown that \Cref{eq: LM_mean,eq: LM_error} suffices in ensuring $\hat{\beta}$ is unbiased for $\beta$.
+    \item Best linear unbiased estimator (BLUE): The term "best" or "optimal" in statistics usually implies that the estimator has smaller variance than other estimators.  To ensure that the OLS estimator is the best in some sense, we need to further assume that the error $\varepsilon$ is \textit{homoscedastic}.  That is, the error variance of each observation should be identical.  With this additional assumption, the \textit{Gauss-Markov Theorem} ensures that $\hat{\beta}$ is the best linear unbiased estimator (BLUE), meaning that among all unbiased estimators that are linear combination of $Y$, $\hat{\beta}$ has the smallest variance.  Also, with $var[\varepsilon|X] = \sigma^2$ implied by homoscedasticity, we now have a concrete variance expression for $\hat{\beta}$:
+    \begin{equation}
+        var(\hat{\beta}) = (\T{\bX}\bX)^{-1}\sigma^2
+    \end{equation}
+    where $\sigma^2$ can be estimated empirically with the residuals.\\
+    An observation aside here is that when the error variance is \textit{heteroscedastic}, i.e. each observation has its own error variance, then OLS is no longer the BLUE.  Heuristically, this is because in OLS, when we are minimizing the sum of squared residuals, we are treating all residuals as equally important.  However, if the error variance is heteroscedastic, some residuals have larger error variance and carry less information, so intuitively we should down-weight these terms when minimizing the squared residuals.  Actually, it can be shown that if the error variance for the $i^{\text{th}}$ observation is $v_i$, then we should use the \textit{inverse error variance} as weights for the residuals, i.e. do the following optimization (writing $\boldsymbol{V} = diag(v_1, v_2, ..., v_n)$):
+    \begin{equation}
+        \argmin_{\beta} \sum_i \frac{(\bY_i - \bX_i \beta)^2}{v_i} = \argmin_{\beta} \T{(\bY-\bX\beta)}\boldsymbol{V}^{-1}(\bY-\bX\beta) = (\T{\bX}\boldsymbol{V}^{-1}\bX)^{-1}\T{\bX}\boldsymbol{V}^{-1}\bY \label{eq: WLS}
+    \end{equation}
+    This is called the \textit{weighted least squares} (WLS) estimator, which can be shown to be the BLUE under heteroscedasticity.  In generalized linear model, since the error variance is mostly heteroscedastic, WLS will come up once more but with a façade.
+    \item Uniform minimum-variance unbiased estimator (UMVUE): In BLUE, OLS is only gauranteed to be "better" than linear combination type estimators. However, if we are further willing to assume that $\varepsilon$ is normally distributed so that $\varepsilon \sim N(0, \sigma^2)$, then the OLS estimator becomes the uniform minimum-variance unbiased estimator.  That is, it is now the estimator with the smallest variance among \textit{all} unbiased estimators.  This fantastic property holds due to the fact that normal distribution belongs to the \textit{exponential family}, and minimally sufficient statistics for exponential families are \textit{complete}.  Since the OLS estimator is a function of $\T{\bX}\bY$, a minimally sufficient statistic for $\beta$, and we have also shown that it is unbiased, \textit{Lehmann-Scheffé Theorem} tells us that the OLS estimator is the UMVUE.  In addition, assuming normality of $\varepsilon$ enables us to not only know the variance of $\hat{\beta}$, but also the exact distribution of $\hat{\beta}$, so that we can construct exact tests and confidence intervals.
+\end{enumerate}
+

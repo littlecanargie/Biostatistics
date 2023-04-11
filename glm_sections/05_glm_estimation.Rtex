@@ -1,0 +1,154 @@
+
+Here we first reiterate the model structure of generalized linear models (GLMs):
+\begin{gather}
+    Y_i|X_i \sim f(\theta_i, \phi) \label{eq: GLM_f_imp}\\
+    g(\mu_i) := \eta_i = X_i\beta \label{eq: GLM_eta_imp}
+\end{gather}
+where $f(\theta_i, \phi)$ typically belongs to the \textit{one-parameter canonical exponential family with dispersion}.  Given that $\theta_i$ is the natural parameter, the log-likelihood implied by \Cref{eq: GLM_f_exp} is
+\begin{gather}
+    \log f(\bY_i | \theta_i, \phi) = \frac{\bY_i \theta_i-b(\theta_i)}{a(\phi)} + c(\bY_i, \phi) \label{eq: GLM_f_exp}
+\end{gather}
+Also, since $\mu_i$ is the conditional expectation of $Y_i$ given $X_i$, we have derived the following relation:
+\begin{gather}
+    \mu_i = b'(\theta_i) \label{eq: GLM_mean}
+\end{gather}
+Combining \Cref{eq: GLM_f_exp,eq: GLM_mean,eq: GLM_eta_imp}, we have the explicit form of the log-likelihood function contributed by observation $i$:
+\begin{gather}
+    \log f(\bY_i | \theta_i, \phi) = \frac{\bY_i \theta_i-b(\theta_i)}{a(\phi)} + c(y_i, \phi) \nonumber\\ 
+    \mu_i = b'(\theta_i) \label{eq: GLM_exp}\\
+    g(\mu_i) := \eta_i = \bX_i\beta \nonumber
+\end{gather}
+
+\subsection{The score function and generalized estimating equations}
+As we have elaborated in previous sections, the regression parameters of GLMs ($\beta$) are typically estimated via maximum likelihood estimation (MLE).  More often than not, the MLE will occur at where the first derivative of the log-likelihood, i.e. score function is zero.  A word of caution is that, previously when we defined the score function, we differentiated the log-likelihood with respect to $\theta$.  But now we are interested in estimating $\beta$, so we will have a \textit{different} score function:
+\begin{align}
+    U(\beta|\bY_i,\bX_i,\phi) &= \frac{\partial}{\partial \beta} \ell(\beta | \bY_i, \bX_i, \phi)\\
+    &= \frac{\partial \log f(\bY_i| \theta_i, \phi)}{\partial \theta_i} \frac{\partial \theta_i}{\partial \mu_i} \frac{\partial \mu_i}{\partial \eta_i} \frac{\partial \eta_i}{\partial \beta}\\
+    &= \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\Big(\frac{\partial \mu_i}{\partial \theta_i}\Big)^{-1}\frac{\partial \mu_i}{\partial \eta_i}\bX_i^\top\\
+    &= \Big(\frac{\bY_i - b'(\theta_i)}{b''(\theta_i)a(\phi)}\Big)\frac{\partial \mu_i}{\partial \eta_i}\bX_i^\top\\
+    &= \underbrace{\Big(\frac{\bY_i - \E[Y_i|\bX_i]}{var[Y_i|\bX_i]}\Big)}_{\text{Weighted residual}} \underbrace{\frac{\partial \mu_i}{\partial \eta_i}}_{\text{Link function correction}} \underbrace{\bX_i^\top}_{\text{Covariates}} \label{eq: score}
+\end{align}
+where $\frac{\partial \mu_i}{\partial \eta_i} = \big(\frac{\partial \eta_i}{\partial \mu_i}\big)^{-1} = \big(g'(\mu_i)\big)^{-1} = \big(g'(g^{-1}(X_i\beta))\big)^{-1}$.  
+
+\smallskip
+The form of \Cref{eq: score} gives us two intuitions.  First, previously we talked about weighted least squares (WLS), where if $v_i = var[Y_i | \bX_i]$, we try to minimize the weighted sum of squared residuals using inverse variance as weights:
+\begin{equation}
+    \sum_i \frac{(Y_i - \bX_i\beta)^2}{v_i}
+\end{equation}
+differentiating with respect to $\beta$ yields
+\begin{equation}
+    2 \sum_i \Big(\frac{Y_i - \bX_i\beta}{v_i}\Big)\bX_i^\top \label{eq: WLS_score}
+\end{equation}
+since in WLS we have $\E[Y_i|\bX_i] = \bX_i \beta$, \Cref{eq: WLS_score} is basically equivalent to the score function of GLMs with identity link (so that $\partial \mu_i / \partial \eta_i = 1$).  In fact, as we will see, the most common estimation algorithm for GLMs, iterative weighted least squares (IWLS), is exactly developed using the estimator for WLS.
+
+\smallskip
+Second, notice that in \Cref{eq: score}, as long as we have the form of conditional expectation and variance of $Y_i$, along with the link function and covariates, we can construct the score without even knowing what the likelihood looks like.  In particular, we can matricize some of the notations as 
+\begin{gather}
+    \boldsymbol{V} = diag(var[Y_i|\bX_i])\\
+    \boldsymbol{D} = diag\Big(\frac{\partial \mu_i}{\partial \eta_i}\Big) \bX
+\end{gather}
+Then we can show that
+\begin{equation}
+    \sum_{i} U(\beta|\bY_i, \bX_i, \phi) = \boldsymbol{D}^\top \boldsymbol{V}^{-1} (\bY - \E[\bY | \bX])
+\end{equation}
+This actually serves as a starting point for \textit{generalized estimating equations (GEE)}, a model that allows observation in GLMs to be correlated.  To introduce correlation between observations, instead of letting $\boldsymbol{V}$ be diagonal, we may replace $\boldsymbol{V}$ with
+\begin{equation}
+    \boldsymbol{V}^* = \boldsymbol{V}^{1/2}\boldsymbol{R}\boldsymbol{V}^{1/2}
+\end{equation}
+where $\boldsymbol{R}$ is the correlation matrix.  The resulting score function, which is also termed as \textit{quasi-score function}, is then solved for roots for $\hat{\beta}$.  Since GEE is not an intended topic for this course, we will stop here and those interested can look for relative materials in the textbook (Ch 11) or online.
+
+\subsection{Newton-Raphson algorithm and Fisher scoring}
+Our goal now is to look for the solution for the equation
+\begin{align}
+    \sum_i U(\beta|\bY_i, \bX_i, \phi) &:= \sum_i U_i(\beta)\\
+    &= \sum_i \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\frac{\partial \theta_i}{\partial \mu_i}\frac{\partial \mu_i}{\partial \eta_i}\bX_i^\top \label{eq: score_canonical}\\
+    &= \sum_i \Big(\frac{\bY_i - b'(\theta_i)}{b''(\theta_i)a(\phi)}\Big)\frac{\partial \mu_i}{\partial \eta_i}\bX_i^\top = 0
+\end{align}
+
+Here we will use the most classic root-finding algorithm, the \textit{Newton-Raphson} algorithm.  Briefly, in Newton-Raphson algorithm, suppose we would like to find the root for a function $h(\beta)$, then we first give an initial ("$0$-th") guess for $\beta$, which we denote as $\hat{\beta}^{(0)}$.  Then we iteratively guess for $\beta$ using the following iterative equation
+\begin{equation}
+    \hat{\beta}^{(k+1)} = \hat{\beta}^{(k)} - (h'(\hat{\beta}^{(k)}))^{-1}h(\hat{\beta}^{(k)})
+\end{equation}
+In our case, our $h(\beta)$ is $\sum_i U_i(\beta)$, so we have the relation
+\begin{equation}
+    \hat{\beta}^{(k+1)} = \hat{\beta}^{(k)} + \Big(\sum_i -\left.\frac{\partial U_i(\beta)}{\partial \beta^\top}\right|_{\beta = \hat{\beta}^{(k)}}\Big)^{-1}\sum_iU_i(\hat{\beta}^{(k)}) \label{eq: Newton}
+\end{equation}
+Notice that $-\frac{\partial}{\partial \beta^\top}U_i(\beta)$ is the negative second derivative of the log-likelihood with respect to $\beta$.  Its expectation, as we have defined, is called the Fisher information $\mathcal{I}_i(\beta)$.  Here we are not calculating its expectation rather than evaluating it at one instance $\bY_i$, so we term it as the \textit{observed information}, denoted as $I_i(\beta)$.
+
+\smallskip
+Based on \Cref{eq: Newton}, to use Newton-Raphson algorithm, for each iteration we would need to calculate \textit{and} invert the sum of observed information, i.e.
+\begin{equation}
+    \sum_i I_i(\hat{\beta}^{(k)}) = \sum_i -\left.\frac{\partial U_i(\beta)}{\partial \beta^\top} \right|_{\beta = \hat{\beta}^{(k)}} = \sum_i -\left.\frac{\partial}{\partial \beta^\top} \bigg[\Big(\frac{\bY_i - b'(\theta_i)}{b''(\theta_i)a(\phi)}\Big)\frac{\partial \mu_i}{\partial \eta_i}\bigg]\right|_{\beta = \hat{\beta}^{(k)}}\bX_i^\top
+\end{equation}
+Analytically, this is not an easy task since both $\theta_i$ and $\partial \mu_i / \partial \eta_i$ involves $\beta$, and differentiation with respect to $\beta$ would be very complicated.  Therefore, to use the vanilla form of Newton-Raphson algorithm, the derivative matrix may need to be solved numerically then inverted, which is very resource-demanding, at least for computers back in the 1980s. 
+
+\smallskip
+To ease the computational burden, statisticians resorted to replacing the observed information $I_i(.)$ with its expectation, i.e. the Fisher information $\mathcal{I}_i(.)$.  So now our iterative equation becomes
+\begin{equation}
+    \hat{\beta}^{(k+1)} = \hat{\beta}^{(k)} + \Big(\sum_i \mathcal{I}_i(\hat{\beta}^{(k)})\Big)^{-1}\sum_i U_i(\hat{\beta}^{(k)}) \label{eq: Newton_Fisher}
+\end{equation}
+Recall that previously we derived the following relation for distributions that has support independent to parameter $\theta$:
+\begin{equation}
+    \E_{Y \sim f(\theta)}[U^2(\theta)] = \mathcal{I}(\theta)
+\end{equation}
+This relation was derived for a scalar parameter $\theta$, but we can also derive it with respect to a vector parameter $\beta$ and yield:
+\begin{equation}
+    \E_{Y \sim f_i(\beta)}[U_i(\beta)U_i^\top(\beta)] = \mathcal{I}_i(\beta)
+\end{equation}
+Therefore, we have (assuming $\beta = \hat{\beta}^{(k)}$, and taking the expectation under $Y_i \sim f_i(\hat{\beta}^{(k)})$)
+\begin{align}
+    \mathcal{I}_i(\hat{\beta}^{(k)}) &= \E[\left.U_i(\hat{\beta}^{(k)})U_i^\top(\hat{\beta}^{(k)})\right|\bX_i]\\
+    &= \E\Big[\left.\Big(\frac{(\bY_i-b'(\theta_i))^2}{(b''(\theta_i)a(\phi))^2}\big(\frac{\partial \mu_i}{\partial \eta_i}\big)^2\Big)\bX_i^\top\bX_i\right|\bX_i\Big]\\
+    &= \E\Big[\left.\Big(\frac{(\bY_i-\E[\bY_i|\bX_i])^2}{(var[\bY_i | \bX_i])^2}\big(\frac{\partial \mu_i}{\partial \eta_i}\big)^2\Big)\bX_i^\top\bX_i\right|\bX_i\Big]\\
+    &= \frac{var[\bY_i | \bX_i]}{(var[\bY_i | \bX_i])^2}\big(\frac{\partial \mu_i}{\partial \eta_i}\big)^2\bX_i^\top\bX_i\\
+    &= \frac{1}{var[\bY_i | \bX_i]}\big(\frac{\partial \mu_i}{\partial \eta_i}\big)^2\bX_i^\top\bX_i\\
+    &= \frac{\bX_i^\top\bX_i}{b''(\theta_i)a(\phi)}\big(\frac{\partial \mu_i}{\partial \eta_i}\big)^2\\
+    &= \frac{\bX_i^\top\bX_i}{b''(\mu^{-1}(g^{-1}(\bX_i\hat{\beta}^{(k)})))a(\phi)}(g^{-1'}(\bX_i\hat{\beta}^{(k)}))^2 \label{eq: Fisher}
+\end{align}
+where $\mu(.)$ is the function relating $\mu_i = \mu(\theta_i)$.  This expression is considerably easier to evaluate than the observed information matrix.  This trick of replacing the second derivative with its expectation is termed as \textit{Fisher scoring}, and is considered the norm of GLM estimation.
+
+\smallskip
+Recall that in the previous section, we defined the \textit{canonical link} of an exponential family as the link that lets the natural parameter $\theta_i = X_i \beta$, which implies $g(.) = \mu^{-1}(.)$, or $g^{-1}(.) = \mu(.)$.  Here we can finally demonstrate two advantages of using the canonical link.  First, \Cref{eq: Fisher} can be further simplified as 
+\begin{align}
+    \mathcal{I}_i(\hat{\beta}^{(k)}) &= \frac{\bX_i^\top\bX_i}{b''(\bX_i\hat{\beta}^{(k)})a(\phi)}(\mu'(\bX_i\hat{\beta}^{(k)}))^2\\
+    &= \frac{\bX_i^\top\bX_i}{b''(\bX_i\hat{\beta}^{(k)})a(\phi)}(b''(\bX_i\hat{\beta}^{(k)}))^2\\
+    &= \frac{b''(\bX_i\hat{\beta}^{(k)})}{a(\phi)}\bX_i^\top\bX_i
+\end{align}
+which is extra nice.  Second, since $\theta_i = X_i\beta := \eta_i$, we have $\frac{\partial \theta_i}{\partial \eta_i} = 1$, so the score function can now be simplified as, from \Cref{eq: score_canonical}:
+\begin{equation}
+    U_i(\beta) = \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\frac{\partial \theta_i}{\partial \mu_i}\frac{\partial \mu_i}{\partial \eta_i}\bX_i^\top = \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\bX_i^\top
+\end{equation}
+Notice that since $\phi$ is assumed known and unrelated to $\beta$, the derivative of $U_i(\beta)$ does not depend on $\bY_i$ anymore.  Therefore, the observed information would be identical to the Fisher information.  To write it out explicitly:
+\begin{align}
+    I_i(\hat{\beta}^{(k)}) = \left.-\frac{\partial U_i(\beta)}{\partial \beta^\top}\right|_{\beta = \hat{\beta}^{(k)}} &= \left.-\frac{\partial}{\partial \beta^\top} \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\bX_i^\top\right|_{\beta = \hat{\beta}^{(k)}} \\
+    &=\left.\frac{\partial}{\partial \beta^\top} \frac{b'(\theta_i)}{a(\phi)}\bX_i^\top\right|_{\beta = \hat{\beta}^{(k)}} \\
+    &=\left.\frac{\partial}{\partial \beta^\top} \frac{b'(\bX_i\beta)}{a(\phi)}\bX_i^\top\right|_{\beta = \hat{\beta}^{(k)}}\\
+    &=\left.\frac{b''(\bX_i\beta)}{a(\phi)}\bX_i^\top \bX_i \right|_{\beta = \hat{\beta}^{(k)}}\\
+    &= \frac{b''(\bX_i\hat{\beta}^{(k)})}{a(\phi)}\bX_i^\top\bX_i = \mathcal{I}_i(\hat{\beta}^{(k)})
+\end{align}
+Therefore, when using canonical links, the vanilla Newton-Raphson algorithm is identical to Fisher scoring.  However, this would not be so if non-canoncial links are used.
+
+\subsection{Iterative weighted least squares (Optional)}
+Let us get back to the Fisher scoring iterative equation, \Cref{eq: Newton_Fisher}.  Notice that the sum of individual Fisher information can be matricized as follows (we assume canonical links are used for brevity),
+\begin{gather}
+    \sum_i \mathcal{I}_i(\hat{\beta}^{(k)}) = \sum_i \frac{b''(\bX_i\hat{\beta}^{(k)})}{a(\phi)} \bX_i^\top\bX_i =  \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \bX\\
+    \boldsymbol{W}(\beta) = diag\Big(\frac{b''(\bX_i\beta)}{a(\phi)}\Big)
+\end{gather}
+The sum of score functions can also be matricized as follows,
+\begin{gather}
+    \sum_i U_i(\hat{\beta}^{(k)}) = \sum_i \Big(\frac{\bY_i - b'(\theta_i)}{a(\phi)}\Big)\bX_i^\top =  \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \boldsymbol{t}(\hat{\beta}^{(k)})\\
+    \boldsymbol{t}(\beta) = diag\Big(\frac{1}{b''(\bX_i\beta)}\Big)(\bY - b'(\bX\beta))
+\end{gather}
+Combining these matrix notations, we can rewrite \Cref{eq: Newton_Fisher} as
+\begin{equation}
+    \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \bX \hat{\beta}^{(k+1)} = \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \bX \hat{\beta}^{(k)} + \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \boldsymbol{t}(\hat{\beta}^{(k)})
+\end{equation}
+Writing $\boldsymbol{z}(\hat{\beta}^{(k)}) = \bX \hat{\beta}^{(k)} + \boldsymbol{t}(\hat{\beta}^{(k)})$, we then have
+\begin{equation}
+    \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \bX \hat{\beta}^{(k+1)} = \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \boldsymbol{z}(\hat{\beta}^{(k)})
+\end{equation}
+with the solution
+\begin{equation}
+    \hat{\beta}^{(k+1)}  = (\bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \bX )^{-1} \bX^\top \boldsymbol{W}(\hat{\beta}^{(k)}) \boldsymbol{z}(\hat{\beta}^{(k)})
+\end{equation}
+Notice that this form is very similar to the solution of WLS shown in Section 1, where $\boldsymbol{z}$ is the outcome vector and $\boldsymbol{W}$ is the weight matrix.  Since the weight matrix is changing for every iteration due to different $\hat{\beta}^{(k)}$, this method is termed as the \textit{iterative weighted least squares}.  This method was proposed to take advantage of the already well-developed WLS procedure in early years, so that statistician would not have to rewrite all the optimization details for GLMs.

@@ -1,0 +1,60 @@
+\documentclass{article}
+%\usepackage{xeCJK}
+%\setCJKmainfont{Noto Sans Mono CJK TC}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{cleveref}
+\usepackage{booktabs}
+\newcommand{\E}{\mathbb{E}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bY}{\boldsymbol{Y}}
+\newcommand{\T}[1]{#1^\top}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\title{Biostatistics Lecture Notes \\\vspace{3mm} \large Generalized Linear Model}
+\author{Ming-Chieh Shih}
+
+\begin{document}
+\maketitle
+
+\section{Starting from Linear Models}
+\input{glm_sections/01_linear_models}
+
+\section{Maximum Likelihood Estimation for Linear Models}
+\input{glm_sections/02_mle_for_lm}
+
+\section{Problems of Linear Models under Non-normal outcomes}
+\input{glm_sections/03_non_normal_outcome_problem}
+
+\section{Model Structure of Generalized Linear Models}
+\input{glm_sections/04_glm_model_structure}
+
+\section{Estimation of Generalized Linear Models}
+\input{glm_sections/05_glm_estimation}
+
+\section{Inference for Generalized Linear Models}
+\input{glm_sections/06_glm_inference}
+
+\section{Generalized Linear Models of Binary Outcomes}
+\input{glm_sections/07_glm_binary_outcome}
+
+\section{Generalized Linear Models of Count Outcomes}
+\input{glm_sections/08_glm_count_outcome}
+
+\end{document}
