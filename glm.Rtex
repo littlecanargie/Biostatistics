@@ -34,27 +34,35 @@
 \maketitle
 
 \section{Starting from Linear Models}
-\input{glm_sections/01_linear_models}
+<<child = 'glm_sections/01_linear_models.Rtex'>>=
+@
 
 \section{Maximum Likelihood Estimation for Linear Models}
-\input{glm_sections/02_mle_for_lm}
+<<child = 'glm_sections/02_mle_for_lm.Rtex'>>=
+@
 
 \section{Problems of Linear Models under Non-normal outcomes}
-\input{glm_sections/03_non_normal_outcome_problem}
+<<child = 'glm_sections/03_non_normal_outcome_problem.Rtex'>>=
+@
 
 \section{Model Structure of Generalized Linear Models}
-\input{glm_sections/04_glm_model_structure}
+<<child = 'glm_sections/04_glm_model_structure.Rtex'>>=
+@
 
 \section{Estimation of Generalized Linear Models}
-\input{glm_sections/05_glm_estimation}
+<<child = 'glm_sections/05_glm_estimation.Rtex'>>=
+@
 
 \section{Inference for Generalized Linear Models}
-\input{glm_sections/06_glm_inference}
+<<child = 'glm_sections/06_glm_inference.Rtex'>>=
+@
 
 \section{Generalized Linear Models of Binary Outcomes}
-\input{glm_sections/07_glm_binary_outcome}
+<<child = 'glm_sections/07_glm_binary_outcome.Rtex'>>=
+@
 
 \section{Generalized Linear Models of Count Outcomes}
-\input{glm_sections/08_glm_count_outcome}
+<<child = 'glm_sections/08_glm_count_outcome.Rtex'>>=
+@
 
 \end{document}
