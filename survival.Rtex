@@ -49,6 +49,4 @@
 \section{Regression methods for parametric survival analysis}
 \include{survival_sections/05_regression_methods}
 
-
-
 \end{document}
