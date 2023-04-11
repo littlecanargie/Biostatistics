@@ -88,3 +88,5 @@ mod3_exp
 # Do a likelihood ratio test 
 1-pchisq(2*(logLik(mod3) - logLik(mod3_exp)), 1)
 @
+
+\subsection{Accelerated failure time regression}
