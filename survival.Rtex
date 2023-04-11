@@ -28,25 +28,30 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-\title{Biostatistics Lecture Notes \\\vspace{3mm} \large Generalized Linear Model}
+\title{Biostatistics Lecture Notes \\\vspace{3mm} \large Survival Analysis}
 \author{Ming-Chieh Shih}
 
 \begin{document}
 \maketitle
 
 \section{Mathematical Formulation of Survival Data}
-\input{survival_sections/01_survival_formulation}
+<<child = 'survival_sections/01_survival_formulation.Rtex'>>=
+@
 
 \section{Common Distributions For Survival Time Modelling}
-\input{survival_sections/02_common_survival_distributions}
+<<child = 'survival_sections/02_common_survival_distributions.Rtex'>>=
+@
 
 \section{Mathematical Formulation of Censoring}
-\input{survival_sections/03_censor_formulation}
+<<child = 'survival_sections/03_censor_formulation.Rtex'>>=
+@
 
 \section{Parametric Inference of Right-Censored Survival Data}
-\input{survival_sections/04_parametric_inference}
+<<child = 'survival_sections/04_parametric_inference.Rtex'>>=
+@
 
 \section{Regression methods for parametric survival analysis}
-\include{survival_sections/05_regression_methods}
+<<child = 'survival_sections/05_regression_methods.Rtex'>>=
+@
 
 \end{document}
