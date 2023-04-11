@@ -1,0 +1,69 @@
+Survival analysis, or time-to-event analysis, is a branch of statistical modelling that focuses on the time $T$ needed for an event (or a set of events) to occur, eg. the time from cancer diagnosis until death, or the time from the manufacture a bulb to its failure.  This time will always be non-negative, so we have $T \ge 0$.  In the following, we assume that $T$ is also continuous if not specified otherwise.  
+
+\medskip
+Since $T$ is a random variable, it can be characterized by its cumulative density function (cdf) and probability density function (pdf):
+\begin{align}
+    \text{Cumulative density function: } F(t) &= \P[T \le t]\\
+    \text{Probability density function: } f(t) &= \frac{\partial}{\partial t} F(t)\\
+    &= \lim_{\Delta t \rightarrow 0^+} \frac{F(t+\Delta t) - F(t)}{\Delta t}\\
+    &= \lim_{\Delta t \rightarrow 0^+} \frac{\P[T \le t+\Delta t] - \P[T \le t]}{\Delta t}\\
+    &= \lim_{\Delta t \rightarrow 0^+} \frac{\P[T \in (t, t+\Delta t]]}{\Delta t}
+\end{align}
+
+\medskip
+We first look at the cdf, $F(t)$.  By definition, $F(t)$ will be non-decreasing, right-continuous and since $T$ is non-negative,
+\begin{align}
+    F(0) = \P(T = 0) = 0; \qquad F(\infty) = 1
+\end{align}
+The meaning of $F(t)$ is \textit{the probability of only surviving up to time $t$}.  In survival analysis, we do not usually work with $F(t)$, but works with the survival function, which means \textit{the probability of surviving past time $t$}:
+\begin{equation}
+    \text{Survival function: } S(t) := \P[T > t] = 1-F(t)
+\end{equation}
+which should be non-increasing, right-continuous and since $T$ is non-negative,
+\begin{align}
+    S(0) = 1-\P(T = 0) = 1; \qquad S(\infty) = 0
+\end{align}
+\medskip
+In addition, although the definition of $f(t)$ show that it represents the density of events at time $t$, often it is more intuitive to consider the \textit{conditional} density of events defined as follows:
+\begin{align}
+    \text{Hazard function: } h(t) &:= \lim_{\Delta t \rightarrow 0^+} \frac{\P[T \in [t, t+\Delta t)~|~T \ge t]}{\Delta t}\\
+    &= \lim_{\Delta t \rightarrow 0^+} \frac{\P[T \in [t, t+\Delta t)~\cap~T \ge t]}{\P(T \ge t)\Delta t}\\
+    &= \left[\lim_{\Delta t \rightarrow 0^+} \frac{\P[T \in [t, t+\Delta t)]}{\Delta t}\right]\frac{1}{S(t^-)}\\
+    &= \frac{f(t)}{S(t)}
+\end{align}
+where in the last equality we use the assumption that $T$ is continuous.  Note that the meaning of $h(t)$ is the density of events \textit{among the subjects alive right before time $t$}, which has three main advantages compared to $f(t)$:
+\begin{enumerate}
+    \item \textbf{Explainability: }$f(t)$ looks at the density of events among the whole population, which may not fit common intuition.  To spell this out, suppose we are modelling the survival of the general population, with time measured in years.  Then $f(100)$ would be much smaller than $f(70)$, since it is much more likely for a person to have a lifespan of $70$ years old than $100$ years old.  However, $h(100)$ would be much larger than $h(70)$, since it is far more likely that a $100$-year-old person dies within the next year than a $70$-year-old person.  Therefore, when we are saying that \text{older people are more likely to decease}, we are actually talking about hazards but not plain probability density.
+    \item \textbf{Stable as modelling target: }In biomedical studies, most of the $h(t)$ varies relatively slowly in $t$, while $f(t)$ can have large fluctuations.  Therefore, it is easier to find a concise model with respect to $h(t)$ than to $f(t)$.  As an example, if the event is occurring homogeneously and randomly, $h(t)$ will be just a constant, while $f(t)$ will be related to exponential functions. 
+    \item \textbf{Simplifying estimation: } Non-parametric estimation in survival analysis often relies on calculating the probability of event among subjects at risk (i.e. alive before a certain time point), which corresponds to the definition of hazard functions.  In addition, the cumulative hazard function, defined as
+    \begin{equation}
+        \text{Cumulative hazard function: } H(t) := \int_0^t h(s)~ds
+    \end{equation}
+    , has good analytical properties and is extensively used in the theoretical development of survival analysis.
+\end{enumerate}
+
+\medskip
+Based on these newly defined functions, we can derive the following identities:
+\begin{align}
+    h(t) &= - \frac{d}{dt}\log S(t) \label{eq: h_log_S}\\
+    S(t) &= e^{-H(t)} \label{eq: S_H}\\
+    H(T) &\sim Exp(1) \label{eq: H_exp}
+\end{align}
+To prove \Cref{eq: h_log_S}, we have
+\begin{equation}
+    h(t) = \frac{f(t)}{S(t)} = \frac{f(t)}{1-F(t)} = - \frac{-f(t)}{1-F(t)} = - \frac{\frac{d}{dt}(1-F(t))}{1-F(t)} = - \frac{d}{dt} \log (1-F(t)) = - \frac{d}{dt}\log S(t)
+\end{equation}
+Integrating both sides above from $0$ to $t$, we can then prove \Cref{eq: S_H}
+\begin{gather}
+    H(t) = \int_0^t h(s) ds = \int_0^t -\frac{d}{ds} \log S(s) ds = -\log S(t) + \log S(0) = -\log S(t)\\
+    \Rightarrow \quad S(t) = e^{-H(t)}
+\end{gather}
+For \Cref{eq: H_exp}, we have
+\begin{align}
+    \P[H(T) > s] &= \P[-\log S(T) > s]\\
+    &= \P[S(T) < e^{-s}]\\
+    &= \P[T > S^{-1}(e^{-s})]\\
+    &= S(S^{-1}(e^{-s})) = e^{-s}
+\end{align}
+which is the survival function of exponential distribution with rate $1$, as we will later show.
+

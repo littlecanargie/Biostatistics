@@ -1,0 +1,187 @@
+In the previous section, we formulated right censorship in survival data by first defining the variable pair $(T_i, C_i)$ as the event times for our event of interest (which we shorthand as the \textit{event time}) and censoring event (which we term as the \textit{censoring time}).  Since we can only observe exactly one of $T_i$ and $C_i$, the observable pair of variables we can actually observe is  
+\begin{equation}
+    (Y_i, \Delta_i) = (\min(T_i, C_i), \mathbf{1}(T_i \le C_i))
+\end{equation}
+where $Y_i$ is either the event time or censoring time, whichever comes first, and $\Delta_i$ is an indicator for $Y_i$ being the event time.
+
+\medskip
+To use maximum likelihood estimation (MLE) to do inference, we first construct the likelihood for $(Y_i, \Delta_i)$.  We make the assumption of $T$ and $C$ being independent, and define the following functions:
+\begin{itemize}
+    \item $f_{T,C}(t, c)$ as the joint probability density function (pdf) for $T$ and $C$.
+    \item $f_T(t; \theta_T)$, $S_T(t; \theta_T)$ and $h_T(t; \theta_T)$ as the marginal pdf, survival function and hazard function for $T$, where $\theta_T$ is the parameter vector for the distribution of $T$.
+    \item $f_C(c; \theta_C)$ and $S_C(c; \theta_C)$ as the marginal pdf and survival function for $C$, where $\theta_T$ is the parameter vector for the distribution of $C$.
+\end{itemize}
+The event $Y_i = y_i, \Delta_i = 1$ is equivalent to $T_i = y_i, C_i \ge y_i$.  Therefore we have
+\begin{align}
+    f_{Y, \Delta}(y_i, \delta_i = 1) &= \int_{y_i}^{\infty} f_{T,C}(y_i, c)~dc\\
+    &= \int_{y_i}^{\infty} f_T(y_i; \theta_T) f_C(c; \theta_C)~dc \label{eq: indep_cum_c}\\
+    &= f_T(y_i; \theta_T) \int_{y_i}^{\infty}f_C(c; \theta_C)~dc\\
+    &= f_T(y_i; \theta_T)S_C(y_i; \theta_C) \label{eq: non_censor_likelihood}
+\end{align}
+where \Cref{eq: indep_cum_c} is due to independence between $T$ and $C$.  Similarly, the event $Y_i = y_i, \Delta_i = 0$ is equivalent to $C_i = y_i, T_i > y_i$, so we have
+\begin{align}
+    f_{Y, \Delta}(y_i, \delta_i = 0) &= \int_{y_i}^{\infty} f_{T,C}(t, y_i)~dt\\
+    &= \int_{y_i}^{\infty} f_T(t; \theta_T) f_C(y_i; \theta_C)~dt\\
+    &= f_C(y_i; \theta_C) \int_{y_i}^{\infty}f_T(t; \theta_T)~dt\\
+    &= f_C(y_i; \theta_C)S_T(y_i; \theta_T) \label{eq: censor_likelihood}
+\end{align}
+Combining \Cref{eq: non_censor_likelihood,eq: censor_likelihood}, we have
+\begin{equation}
+    f_{Y, \Delta}(y_i, \delta_i) := L_i(\theta_T, \theta_C; y_i, \delta_i) = \Big[f_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)^{1-\delta_i}\Big]\Big[f_C(y_i; \theta_C)^{1-\delta_i}S_C(y_i; \theta_C)^{\delta_i}\Big]
+\end{equation}
+Therefore, the likelihood for the full data set is
+\begin{equation}
+    L_{T,C}(\theta_T, \theta_C) = \Big[\prod_{i} f_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)^{1-\delta_i}\Big]\Big[\prod_{i}f_C(y_i; \theta_C)^{1-\delta_i}S_C(y_i; \theta_C)^{\delta_i}\Big]
+\end{equation}
+Alternatively, using the fact that hazard function $h(t) = f(t)/S(t)$, we have
+\begin{equation}
+    L_{T,C}(\theta_T, \theta_C) = \Big[\prod_{i} h_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)\Big]\Big[\prod_{i}f_C(y_i; \theta_C)^{1-\delta_i}S_C(y_i; \theta_C)^{\delta_i}\Big]
+\end{equation}
+Suppose we are only interested in the inference of $\theta_T$.  If $\theta_T$ and $\theta_C$ do not share the same parameters, the second product term does not contribute to the likelihood-based inference of $\theta_T$, since it is only a constant relative to $\theta_T$ in the log-likelihood.  Therefore, our inference can be based on only the first product term
+\begin{equation}
+    L(\theta_T) = \prod_{i} h_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)
+\end{equation}
+Or, for the log-likelihood
+\begin{equation}
+    \ell(\theta_T) = \sum_{i} \delta_i \log h_T(y_i; \theta_T) + \log S_T(y_i; \theta_T)
+\end{equation}
+Now let's use the above likelihood for inference of exponentially distributed survival time, which is frequently used in epidemiology to obtain the \textit{incidence (rate)} of an event of interest.  Suppose the time to event $T_1, T_2, ... T_n$ are \textit{i.i.d.} distributed as $\text{Exp}(\lambda)$, which are subject to non-informative right censoring so that for each subject we observe the pair of random variables $(Y_i, \Delta_i)$.  For brevity, we denote $R = \sum_i \Delta_i$ as the total number of events observed, and $M = \sum_i Y_i$ as the total follow-up person-time.  Since $T_i$ follow \textit{i.i.d.} exponential distributions, we have
+\begin{gather}
+    \log h_T(y_i; \lambda) = \log \lambda\\
+    \log S_T(y_i; \lambda) = \log e^{-\lambda y_i} = - y_i \lambda
+\end{gather}
+Therefore, the score function with respect to $\lambda$ would be 
+\begin{align}
+    U(\lambda) = \frac{\partial}{\partial \lambda} \ell(\lambda) &= \frac{\partial}{\partial \lambda} \Big[\sum_{i} \Delta_i \log \lambda - Y_i \lambda\Big]\\
+    &= \frac{\partial}{\partial \lambda} [R \log \lambda - M \lambda]\\
+    &= \frac{R}{\lambda} - M
+\end{align}
+The MLE for $\lambda$ can be obtained by letting $U(\hat{\lambda}) = 0$, so we have
+\begin{equation}
+    \hat{\lambda} = \frac{R}{M}
+\end{equation}
+which is the number of events divided by the total follow-up person-time.  To calculate the asymptotic variance of $\hat{\lambda}$, we first derive the negative second derivative of the log-likelihood:
+\begin{equation}
+    -\frac{d^2}{d\lambda^2} \ell(\lambda)= -\frac{d}{d\lambda}\Big(\frac{R}{\lambda}-M\Big) = \frac{R}{\lambda^2}
+\end{equation}
+Therefore, we have the Fisher information and observed information
+\begin{gather}
+    \mathcal{I}(\lambda) = \frac{\E[R]}{\lambda^2} = \frac{n\P[T \le C]}{\lambda^2} := \frac{np}{\lambda^2}\label{eq: Fisher}\\
+    I(\hat{\lambda}) = \frac{R}{\hat{\lambda}^2} = \frac{M^2}{R}
+\end{gather}
+where in \Cref{eq: Fisher}, $R$ is a sum of \textit{i.i.d.} Bernoulli variables $\Delta_i$, so its expectation value would be $np$ where $p$ is the probability of $\Delta_i = 1$.  From the theory of MLE, we would have the asymptotic distribution
+\begin{equation}
+    \sqrt{n}(\hat{\lambda} - \lambda) \xrightarrow[]{d} N(0, \lambda^2/p)
+\end{equation}
+or, with slight abuse of notation
+\begin{equation}
+    \hat{\lambda} \xrightarrow[]{d} N(\lambda, \lambda^2/np) \approx N(\lambda, R/M^2)
+\end{equation}
+However, this asymptotic distribution is not ideal since (1) $\lambda$ is a positive number, while normal distribution can take negative values (2) its variance has terms of unknown parameter $\lambda$ that needs to be approximated with $R/M$.  We can therefore try basing our inference on $\log \lambda$ instead of $\lambda$.  
+
+\medskip
+One way to infer with respect to $\log \lambda$ is to let $\theta = \log \lambda$, express the log-likelihood with $\theta$, and redo the above all again.  Another way is to tweak our current result with respected to $\lambda$ a little bit, which we will now do.  First, since MLEs are \textit{functional invariant}, the MLE of $\log \lambda$ would be $\log \hat{\lambda} = \log (R/M)$.  Then, to obtain the asymptotic distribution of $\log \hat{\lambda}$, we use the \textbf{delta method}, which states
+\begin{thm}[Univariate delta method]
+    Suppose a sequence of one-dimensional random variables $\hat{\theta}_n$ satisfies $\sqrt{n}(\hat{\theta}_n - \theta) \xrightarrow[]{d} N(0, \sigma^2)$, and $g(.)$ is a function so that $g'(\theta)$ exists, then 
+    \[\sqrt{n}[g(\hat{\theta}_n) - g(\theta)] \xrightarrow[]{d} N(0, \sigma^2 (g'(\theta))^2)\]
+\end{thm}
+Therefore, we can let $\theta_n = \hat{\lambda}$, $\theta = \lambda$, $\sigma^2 = \lambda^2/p$ and $g(\lambda) = \log \lambda $ so that $g'(\lambda) = 1/\lambda$.  From delta method we yield
+\begin{equation}
+    \sqrt{n}(\log \hat{\lambda} - \log \lambda) \xrightarrow[]{d} N\bigg(0, \frac{\lambda^2}{p}\Big(\frac{1}{\lambda}\Big)^2 = \frac{1}{p}\bigg)
+\end{equation}
+Or, with slight abuse of notation
+\begin{equation}
+    \log \hat{\lambda} \xrightarrow[]{d} N(\log \lambda, 1/np) \approx N(\log \lambda, 1/R)
+\end{equation}
+Therefore, hypothesis testing for $H_0: \lambda = \lambda_0$ can be based on the $Z$ statistic
+\begin{equation}
+    Z = \sqrt{R}(\log \hat{\lambda} - \log \lambda_0)
+\end{equation}
+which should follow a standard normal distribution under $H_0$.  To construct a confidence interval for $\lambda$, since we have
+\begin{equation}
+    \P[\log(\hat{\lambda}) - Z_{1-\alpha/2}/\sqrt{R} < \log \lambda < \log(\hat{\lambda}) + Z_{1-\alpha/2}/\sqrt{R}] \approx 1 - \alpha
+\end{equation}
+We can construct a confidence interval with asymptotic coverage $(1-\alpha)$ by
+\begin{equation}
+    \Big(\hat{\lambda}e^{-Z_{1-\alpha/2}/\sqrt{R}}, \hat{\lambda}e^{Z_{1-\alpha/2}/\sqrt{R}}\Big)
+\end{equation}
+Let's see how this compares to the results produced by the survival regression command \texttt{phreg} provided in package \texttt{eha}.  We use the Primary Biliary Cholangitis (\texttt{pbc}) data built in the \texttt{survival package}.  The variable \texttt{time} is the follow-up time for each subject.  The variable \texttt{status} takes value $0$ if the subject is censored, $1$ if the subject underwent liver transplantation, and $2$ if the subject died.  Suppose we are interested in the composite event of transplantation and death, so that status taking value $1$ or $2$ are both seen as events of interest.  We now try to infer on the incidence of event:
+
+<<>>=
+library(survival)
+library(eha)
+vcov.phreg <- function(mod) mod$var
+data(pbc)
+
+pbc <- pbc[!is.na(pbc$trt), ]
+
+R <- sum(pbc$status >= 1)
+M <- sum(pbc$time)
+
+Z <- qnorm(1-0.05/2)
+
+# Use phreg to perform exponential regression
+mod <- phreg(Surv(time, status >= 1) ~ 1, 
+             dist = "weibull", shape = 1, data = pbc)
+mod
+
+# Estimates for lambda
+R/M
+exp(-coef(mod))
+
+# Confidence interval for lambda
+c(R/M * exp(-Z/sqrt(R)), R/M * exp(Z / sqrt(R)))
+exp(rev(-confint(mod)))
+@
+
+We can see that the exponential regression carried out by \texttt{phreg} produced the same results as our theoretical derivation. 
+
+\medskip
+In the previous demonstration we inferred the incidence rate of an event of interest, i.e. we only had one group in our data.  Suppose now we would like to compare the incidence of two subgroups and infer the ratio of their incidence rate, i.e. incidence rate ratio (IRR).  We can calculate the number of events and follow-up person-time for the two subgroups separately, say $R_1, R_2$ and $M_1, M_2$.  Then we have:
+\begin{align}
+    \log \hat{\lambda}_1 &= \log (R_1/M_1) \xrightarrow{d} N(\log \lambda_1, 1/R_1)\\
+    \log \hat{\lambda}_2 &= \log (R_2/M_2) \xrightarrow{d} N(\log \lambda_2, 1/R_2)
+\end{align}
+where $\lambda_1$ and $\lambda_2$ are the incidence rate for the two subgroups.  Since the two subgroups are independent, we have
+\begin{equation}
+    \log \hat{\lambda}_1 - \log \hat{\lambda}_2 \xrightarrow{d} N(\log \lambda_1 - \log \lambda_2, 1/R_1 + 1/R_2)
+\end{equation}
+Or, written in the form of IRR:
+\begin{equation}
+    \log (\hat{\lambda}_1/\hat{\lambda}_2) \xrightarrow{d} N(\log (\lambda_1/\lambda_2), 1/R_1+1/R_2)
+\end{equation}
+Therefore, hypothesis testing for $H_0: \lambda_1 = \lambda_2$ can be based on the $Z$ statistic
+\begin{equation}
+    Z = \sqrt{R}\log (\hat{\lambda}_1/\hat{\lambda}_2)
+\end{equation}
+which follows a standard normal distribution under $H_0$.  To construct a confidence interval for the IRR, since we have
+\begin{equation}
+    \P[\log(\hat{\lambda}_1/\hat{\lambda}_2) - Z_{1-\alpha/2}\sqrt{1/R_1+1/R_2} < \log (\lambda_1/\lambda_2) < \log(\hat{\lambda}_1/\hat{\lambda}_2) + Z_{1-\alpha/2}\sqrt{1/R_1+1/R_2}] \approx 1 - \alpha
+\end{equation}
+We can construct a confidence interval with asymptotic coverage $(1-\alpha)$ by
+\begin{equation}
+    \Big((\hat{\lambda}_1/\hat{\lambda}_2) e^{-Z_{1-\alpha/2}\sqrt{1/R_1+1/R_2}}, (\hat{\lambda}_1/\hat{\lambda}_2)e^{Z_{1-\alpha/2}\sqrt{1/R_1+1/R_2}}\Big)
+\end{equation}
+Let us demonstrate this with the \texttt{pbc} dataset, where \texttt{trt} takes value $1$ if the subject received D-penicillamine and $2$ if the subject received placebo.  We would like to estimate and infer the IRR of event between these two subgroups:
+<<>>=
+# Calculate the number of events for each group based on treatment status
+R1 <- sum(pbc$status[pbc$trt == 1] >= 1)
+M1 <- sum(pbc$time[pbc$trt == 1])
+R2 <- sum(pbc$status[pbc$trt == 2] >= 1)
+M2 <- sum(pbc$time[pbc$trt == 2])
+
+# Use phreg to perform exponential regression
+mod2 <- phreg(Surv(time, status >= 1) ~ (trt == 1), 
+              dist = "weibull", shape = 1, data = pbc)
+mod2
+
+# Estimates for incidence rate ratio
+(R1/M1)/(R2/M2)
+exp(coef(mod2))
+
+# Confidence interval for incidence rate ratio
+c((R1/M1)/(R2/M2) * exp(-Z*sqrt(1/R1+1/R2)), 
+  (R1/M1)/(R2/M2) * exp(Z*sqrt(1/R1+1/R2)))
+exp(confint(mod2))
+@
+We can see that we still arrive at results identical to that produced by \texttt{phreg}.  In addition, the $95\%$ confidence interval of the IRR includes $1$, so we \textit{cannot} reject the null hypothesis that the two subgroups have the same IRR. 

@@ -1,0 +1,131 @@
+\underline{\textbf{Exponential distribution}}
+
+\medskip
+An exponential distribution with rate parameter $\lambda > 0$ has the cdf and pdf
+\begin{align}
+    F(t) &= 1 - e^{-\lambda t}\\
+    f(t) &= \lambda e^{-\lambda t}
+\end{align}
+The survival, hazard and cumulative hazard functions are thus
+\begin{align}
+    S(t) &= e^{-\lambda t}\\
+    h(t) &= \lambda\\
+    H(t) &= \lambda t
+\end{align}
+Therefore, the exponential distribution assumes \textit{constant hazards}, which is the case when the event randomly occurs homogeneously across time at rate $\lambda$.  This leads to the \textit{Memoryless property} of exponential distributions, where for all $t_0 \ge 0$
+\begin{equation}
+    \P[T > t] = \P[T > t + t_0 | T > t_0]
+\end{equation}
+In addition, since $\lambda$ is the rate of event occurrence, we can see $Exp(\lambda)$ as "fastforwarding" the time of $X$ by $\lambda$ times.  Therefore, the event occurrence time would be shrinked by a factor of $\frac{1}{\lambda}$ compared to $Exp(1)$, so we have
+\begin{equation}
+    Exp(\lambda) \sim \frac{1}{\lambda}Exp(1)
+\end{equation}
+or more generally
+\begin{equation}
+    Exp(k\lambda) \sim \frac{1}{k}Exp(\lambda)
+\end{equation}
+
+\medskip
+Previously we have shown that exponential distribution belongs to the exponential family.  Therefore, with properly assigned link function, GLMs can also be used in modelling exponentially distribution survival time.
+
+\bigskip
+\noindent\underline{\textbf{Gamma distribution}}
+
+\medskip 
+Exponential distributions are in essence Gamma distributions with shape parameter as $1$.  Therefore, to relax the assumption of constant hazards, we may model the survival time with Gamma distributions of shape parameter $\alpha$, which has the following pdf
+\begin{align}
+    f(t) &= \frac{\lambda^\alpha}{\Gamma(\alpha)}~t^{\alpha-1}~e^{-\lambda t}
+\end{align}
+Its cdf does not have a close form, so its survival function, hazard function and cumulative hazard function all do not have closed forms.  We can still numerically plot the hazard function (with rate parameter $1$) and see that when $0 < \alpha < 1$, the hazards is monotonically decreasing, and when $\alpha > 1$, the hazards in monotonically increasing.  When $\alpha = 1$, Gamma distribution is exactly the exponential distribution and thus has constant hazards.  Also notice in the plot that the hazards converges to $1 = \lambda$, no matter what the value of $\alpha$ is.  This may not correspond to some biomedical survival outcomes where we expect the hazards to grow indefinitely with time.
+
+\medskip
+Since Gamma distributions with known shape parameter also belongs to the exponential family, so the GLM framework still applies.
+
+<<echo=FALSE, fig.height = 3.5, fig.width = 7, fig.align = "center">>=
+par(mar=c(4,4,1,2))
+x <- seq(0, 10, 0.01)
+
+plot(x, dgamma(x, 1, 1)/pgamma(x, 1, 1, lower.tail = F), xlim = c(0, 6), ylim = c(0, 2), 
+     type = "l", xlab = "Time", ylab = "Hazard")
+points(x, dgamma(x, 2, 1)/pgamma(x, 2, 1, lower.tail = F), type = "l", col = "red")
+points(x, dgamma(x, 0.5, 1)/pgamma(x, 0.5, 1, lower.tail = F), type = "l", col = "blue")
+legend(4, 2, legend = c(expression(paste(alpha, " = 2")), 
+                        expression(paste(alpha, " = 1")),
+                        expression(paste(alpha, " = 0.5"))),
+       lty = 1, col = c("red","black","blue"))
+@
+
+\noindent\underline{\textbf{Weibull distribution}}
+
+\medskip
+Weibull distribution is another extension of exponential distribution that aims to relax the assumption of constand hazards by defining (letting $p > 0$)
+\begin{equation}
+    Weibull(p, \lambda) \sim [Exp(\lambda^p)]^{1/p}
+\end{equation}
+Based on this definition, we have the following cdf and pdf,
+\begin{align}
+    F(t) &= 1-e^{-(\lambda t)^p}\\
+    f(t) &= p \lambda^p t^{p-1}e^{-(\lambda t)^p}
+\end{align}
+Therefore we have,
+\begin{align}
+    h(t) &= p \lambda^p t^{p-1}\\
+    H(t) &= (\lambda t)^p
+\end{align}
+Therefore, under Weibull distribution, the hazards is proportional to a power of time, $t^{p-1}$.  When $0 < p < 1$, the hazards monotonically decreases and goes to zero;  when $p > 1$, the hazards monotonically increases and goes to infinity.  When $p = 1$, Weibull distribution become exponential distribution with constant hazards.  Also, with this parameterization, Weibull distribution has a similar identity as exponential distribution, where
+\begin{equation}
+    Weibull(p, k\lambda) \sim \frac{1}{k} Weibull(p, \lambda)
+\end{equation}
+<<echo=FALSE, fig.height = 3.5, fig.width = 7, fig.align = "center">>=
+par(mar=c(4,4,1,2))
+x <- seq(0, 10, 0.01)
+
+plot(x, dweibull(x, 1, 1)/pweibull(x, 1, 1, lower.tail = F), xlim = c(0, 6), ylim = c(0, 4), 
+     type = "l", xlab = "Time", ylab = "Hazard")
+points(x, dweibull(x, 3, 1)/pweibull(x, 3, 1, lower.tail = F), type = "l", col = "darkgreen")
+points(x, dweibull(x, 2, 1)/pweibull(x, 2, 1, lower.tail = F), type = "l", col = "red")
+points(x, dweibull(x, 0.5, 1)/pweibull(x, 0.5, 1, lower.tail = F), type = "l", col = "blue")
+legend(4, 3.75, legend = c("p=3","p=2", "p=1", "p=0.5"),
+       lty = 1, col = c("darkgreen","red","black","blue"))
+@
+
+\noindent\underline{\textbf{Generalized Gamma distribution}}
+
+\medskip
+Generalized Gamma distribution unifies the generalization done by Gamma distribution and Weibull distribution, so that we have the pdf,
+\begin{equation}
+    f(t) = \frac{\lambda^\alpha}{\Gamma(\alpha/p)}pt^{\alpha-1}e^{-(\lambda t)^p}
+\end{equation}
+When $p = 1$, the distribution becomes a Gamma distribution with shape parameter $\alpha$.  When $\alpha = 1$, the distribution becomes a Weibull distribution with shape parameter $p$.  When both parameters are $1$, the distribution becomes an exponential.  Under this parameterization, we may use likelihood ratio test to test the adequacy of these models.
+
+\medskip
+\noindent\underline{\textbf{Lognormal distribution}}
+
+\medskip
+In previous distributions, the hazard function is always monotonic, and the shape parameters determine if the function is monotonically increasing or decreasing.  In the case where the hazards is not monotonic, we may try the lognormal distribution, which is defined as
+\begin{equation}
+    LN(t) \sim \exp[N(\mu, \sigma^2)]
+\end{equation}
+which implies the following pdf, cdf and hazard functions
+\begin{align}
+    f(t) &= \frac{1}{\sqrt{2\pi \sigma t}} \exp\Big(-\frac{(\log t - \mu)^2}{2\sigma^2}\Big)\\
+    F(t) &= \Phi\Big(\frac{\log t - \mu}{\sigma}\Big)\\
+    h(t) &= \frac{f(t)}{1-F(t)}
+\end{align}
+As shown in the figure below, lognormal distribution assumes a hazard function that rises up initially and then drops back to zero as time progresses.  A smaller $\mu$ indicates a more aggressive change in hazards, while $\sigma$ changes the scale of the distribution.
+
+<<echo=FALSE, fig.height = 3.5, fig.width = 7, fig.align = "center">>=
+par(mar=c(4,4,1,2))
+x <- seq(0, 10, 0.01)
+
+plot(x, dlnorm(x, 0, 1)/plnorm(x, 0, 1, lower.tail = F), xlim = c(0, 6), ylim = c(0, 2.5), 
+     type = "l", xlab = "Time", ylab = "Hazard")
+points(x, dlnorm(x, 2, 1)/plnorm(x, 2, 1, lower.tail = F), type = "l", col = "darkgreen")
+points(x, dlnorm(x, 1, 1)/plnorm(x, 1, 1, lower.tail = F), type = "l", col = "red")
+points(x, dlnorm(x, -1, 1)/plnorm(x, -1, 1, lower.tail = F), type = "l", col = "blue")
+legend(4, 2.5, legend = c(expression(paste(mu, " = 2")), 
+                        expression(paste(mu, " = 1")),
+                        expression(paste(mu, " = 0")),
+                        expression(paste(mu, " = -1"))),
+       lty = 1, col = c("darkgreen","red","black","blue"))
+@
