@@ -1,0 +1,90 @@
+In addition to modelling the distribution of survival time over the whole population or over a handful of subgroups, often times it is of our interest how covariates are related to the survival, eg. how survival changes as the body mass index (BMI) of a cancer patient increases.  There are two commonly used models that allows us to regress survival on covariates, which we elaborate below:
+
+\subsection{Proportional hazards regression}
+In proportional hazards regression, it is assumed that a function of covariates $X$ acts \textit{multiplicatively} on the \textit{hazard function}, i.e. most generally
+\begin{equation}
+    h(t|X) = h_0(t)g(X) \label{eq: PH}
+\end{equation}
+where $g(X)$ is non-negative since hazard functions are non-negative.  The reason why this framework is termed as \textit{proportional} hazards regression is that the hazard function is \textit{proportional to} a certain function of the covariates.  Note that under this framework, the hazard ratio between two subjects with covariate status $X_1$ and $X_2$ would be
+\begin{equation}
+    \frac{h_1(t)}{h_2(t)} = \frac{h(t|X_1)}{h(t|X_2)} = \frac{h_0(t)g(X_1)}{h_0(t)g(X_2)} = \frac{g(X_1)}{g(X_2)} \label{eq: PH_HR}
+\end{equation}
+so that the hazard ratio \textit{does not depend on time} and only depends on the covariates.  Based on \Cref{eq: PH}, we have
+\begin{align}
+    S(t|X) = \exp(-H(t|X)) &= \exp\Big(-\int_0^{t}h(s|X)ds\Big)\\
+    &= \exp\Big(-\int_0^{t}h_0(s)g(X)ds\Big)\\
+    &= \exp\Big(-\int_0^{t}h_0(s)ds \cdot g(X)\Big)\\
+    &= \exp(-H_0(t)g(X)) = S_0(t)^{g(X)} \label{eq: PH_survival}
+\end{align}
+which can aid the likelihood construction as we have elaborated in the previous section.
+
+\medskip
+More often than not, for simplicity, we would want $g(X)$ be related to $X\beta$, the linear combination of elements in $X$.  Since $g(X)$ must be non-negative, we can let $g(X) = \exp(X\beta)$, which from \Cref{eq: PH,eq: PH_survival} we have 
+\begin{align}
+    h(t|X) &= h_0(t)\exp(X\beta) \label{eq: PH_lin}\\
+    S(t|X) &= S_0(t)^{\exp(X\beta)} \label{eq: PH_survival_lin}
+\end{align}
+Under this circumstance, suppose we can write $X$ as $\T{(X_1, X_2,..., X_p)}$ and $\beta$ as $\T{(\beta_1, \beta_2, ..., \beta_p)}$ (note that we do not include an intercept here, why?), then for two subjects with covariates $\T{(x_1, x_2, ..., x_j+1, ..., x_p)}$ and $\T{(x_1, x_2, ..., x_j, ..., x_p)}$, their hazard ratio would be, from \Cref{eq: PH_HR}
+\begin{equation}
+    \frac{\exp(x_1\beta_1 + x_2\beta_2 + \cdots + (x_j+1)\beta_j + \cdots + x_p\beta_p)}{\exp(x_1\beta_1 + x_2\beta_2 + \cdots + x_j\beta_j + \cdots + x_p\beta_p)} = \frac{\exp((x_j+1)\beta_j)}{\exp(x_j\beta_j)} = \exp(\beta_j)
+\end{equation}
+Therefore, $\exp(\beta_j)$ is the hazard ratio when covariates other than $x_j$ are held constant and $x_j$ is incremented by $1$, and $\beta_j$ is \textit{log hazard ratio} under the increment.
+
+\medskip
+Although $h_0(t)$ can be set as any hazard function, it is not guaranteed that under the proportional hazards setting, $h(t|X)$ will be of the same class of $h_0(t)$.  That is, some survival time distributions are not closed under the proportional hazards framework.  Weibull distribution is one of the distributions that is closed under proportional hazards.  To see that, suppose $h_0(t)$ is set as the hazard function for $\text{Weibull}(p, \lambda_0)$, then we have, from \Cref{eq: PH_lin}
+\begin{gather}
+    h_0(t) = p\lambda_0^pt^{p-1}\\
+    h(t|X) = h_0(t)\exp(X\beta) = p\lambda_0^pt^{p-1}\exp(X\beta) = p (\lambda_0\exp(X\beta/p))^pt^{p-1}
+\end{gather}
+Therefore, the survival distribution for a subject of covariate $X$ is $\text{Weibull}(p, \lambda_0\exp(X\beta/p))$.  Or, equivalently, we are fixing the shape parameter as $p$ and modelling the rate parameter $\lambda$ as 
+\begin{equation}
+    \log \lambda = \log \lambda_0 + X\beta/p
+\end{equation}
+However, if $h_0(t)$ is set a the hazard function for $\text{LN}(\mu, \sigma^2)$, then we have
+\begin{gather}
+    S_0(t) = 1-\Phi\Big(\frac{\log t - \mu}{\sigma}\Big)\\
+    S(t|X) = S_0(t)^{\exp(X\beta)} = \Big[1-\Phi\Big(\frac{\log t - \mu}{\sigma}\Big)\Big]^{\exp(X\beta)}
+\end{gather}
+which cannot be reduced back to the structural form for survival functions of log-normal survivals. 
+
+\medskip
+We now demonstrate how proportional hazards regression can be carried out in real data using the \texttt{pbc} dataset.  Suppose in addition to the effect of treatment (\texttt{trt}), we would also want to investigate the effect of the following variables:
+\begin{itemize}
+  \item \texttt{age}: Age in years
+  \item \texttt{sex}: Sex, M or F
+  \item \texttt{edema}: The subject's edema status, $0$ if no edema, $0.5$ if untreated or successfully treated, $1$ if edema despite diuretics
+  \item \texttt{albumin}: Serum albumin level in g/dL
+  \item \texttt{ascites}: If the subject had ascites
+  \item \texttt{ast}: Serum AST level in U/mL
+  \item \texttt{bili}: Serum bilirubin level in mg/dL
+  \item \texttt{protime}: Prothrombin time, a test for blood coagulation, in seconds
+\end{itemize}
+
+We can then fit a proportional hazards regression using Weibull distribution as baseline survival distribution.  Since the values for \texttt{ascites} does not have numerical meanings, we use it as factor.  Using the \texttt{phreg} routine, we get the following results:
+
+<<>>=
+# Fit a proportional hazards regression with Weibull distribution
+mod3 <- phreg(Surv(time, status >= 1) ~ (trt == 1) + age + sex + factor(edema) + 
+                albumin + ascites + ast + bili + protime, dist = "weibull", data = pbc)
+mod3
+
+# Generate confidence intervals for the exponentiated regression coefficients
+exp(confint(mod3))
+@
+
+From the results for the regression, we see that a bunch of variables may influence our composite event of interest.  For example, for the variable \texttt{sex}, we see that after controlling for other covariates, the hazard ratio of female compared to male is \texttt{0.602} with $95\%$ confidence interval \texttt{(0.380, 0.955)}.  This implies taken all other risk factors into consideration, females are \textit{less} risky than males with regard to our event of interest.  For the variable \texttt{ast}, the estimated hazard ratio is \texttt{1.004} with $95\%$ confidence interval \texttt{(1.001, 1.007)}, which implies that after controlling for other covariates, each $1$ U/mL increase of AST level in the serum will result in a $0.4\%$ increase of hazards.  Since an $1$ U/mL increase in AST is not relevant clinically, we may raise the exponentiated coefficient and confidence interval bounds to the $10^\text{th}$ power, arriving at a hazard ratio of $1.041$ with $95\%$ confidence interval $(1.010, 1.069)$.  This implies that each $10$ U/mL increase of AST level in the serum with result in a $4.1\%$ increase in hazards, which is clinically more interpretable. 
+
+\medskip
+Also, we see that the estimate of \texttt{log(shape)}, which is $\log p$ in the parameterization of Weibull distribution, is estimated as \texttt{0.458} and said to be significantly away from $0$ according to the Wald $p$-value.  Since a $\log p$ of $0$ corresponds to the exponential distribution, this implies that simplifying the baseline survival distribution into an exponential distribution would not be a good idea, since its fit would significantly worse than the current model.  Alternatively, we can use likelihood ratio test to carry out the comparison between Weibull distribution and exponential distribution by fitting a exponential distribution-based proportional hazards regression, and comparing the log-likelihood between the two models.  The degrees of freedom for the test would be $1$, since we are only constraining $p$ to be $1$ in the exponential distribution-based model.
+
+<<>>=
+
+# Fit a proportional hazards regression with Exponential distribution
+mod3_exp <- phreg(Surv(time, status >= 1) ~ (trt == 1) + age + sex + factor(edema) + 
+                    albumin + ascites + ast + bili + protime, dist = "weibull", 
+                  shape = 1, data = pbc)
+mod3_exp
+
+# Do a likelihood ratio test 
+1-pchisq(2*(logLik(mod3) - logLik(mod3_exp)), 1)
+@

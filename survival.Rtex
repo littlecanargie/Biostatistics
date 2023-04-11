@@ -1,0 +1,54 @@
+\documentclass{article}
+%\usepackage{xeCJK}
+%\setCJKmainfont{Noto Sans Mono CJK TC}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{cleveref}
+\usepackage{booktabs}
+\newcommand{\E}{\mathbb{E}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bY}{\boldsymbol{Y}}
+\newcommand{\T}[1]{#1^\top}
+\newtheorem{thm}{Theorem}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\title{Biostatistics Lecture Notes \\\vspace{3mm} \large Generalized Linear Model}
+\author{Ming-Chieh Shih}
+
+\begin{document}
+\maketitle
+
+\section{Mathematical Formulation of Survival Data}
+\input{survival_sections/01_survival_formulation}
+
+\section{Common Distributions For Survival Time Modelling}
+\input{survival_sections/02_common_survival_distributions}
+
+\section{Mathematical Formulation of Censoring}
+\input{survival_sections/03_censor_formulation}
+
+\section{Parametric Inference of Right-Censored Survival Data}
+\input{survival_sections/04_parametric_inference}
+
+\section{Regression methods for parametric survival analysis}
+\include{survival_sections/05_regression_methods}
+
+
+
+\end{document}

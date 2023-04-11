@@ -1,0 +1,23 @@
+If survival analyses were just dealing with non-negative outcomes, it would not be too complicated a problem since we can always try to transform the outcome or use the GLM framework we have just learned.  In fact, if we are willing to assume that the outcome is distributed as lognormal, we can just transform the survival time with logarithm and proceed on with linear regression.  However, another common feature in survival data is the presence of \textit{censoring}, which prevents us from observing the true event time $T$, but can only know its bounds.  
+
+\medskip
+For example, suppose we have a cohort study that aims to determine the survival of stage 2 colon cancer patients after surgery.  The study follows the patients until the end of year $2022$ and records the date of their death.  However, after the study ends, there will be still patients that are alive.  To illustrate this, we have a graph showing five patients in the cohort, where the filled dots are the time each patient was recruited into the cohort, and the Xs are the time each patient died.  
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.5\textwidth]{survival_sections/graphs/Censoring.png}
+    \label{fig: censoring}
+\end{figure}
+
+\medskip
+For patients $1$, $2$ and $3$, we know their exact survival times as $2$, $3$ and $1.5$ years.  However, for patient $4$, the study ended before they died, so we only know that their survival time was greater than $4$ years, or $T_4 > 4$.  For patient $5$, after following for $1.5$ years, they dropped out of the study for certain reasons, so they we could not know if they died between their drop-out date and the end of $2022$.  Therefore, we also just know that $T_5 > 1.5$.  This kind of censoring is called \textit{right censoring}, which means that we only have a \textit{lower bound} of the true event time.  In contrast, if we only have a \textit{upper bound} of the true event time, then this is called \textit{left censoring}.  If we know the true event time is \textit{within an interval}, then this is called \textit{interval censoring}.  Most of the time, survival data in the biomedical field will present with right censoring, so in the following we will discuss it in depth.
+
+\medskip
+The most common formulation of right censoring is to assume that there are two different "events", out event of interest and the "censoring event."  Each subject $i$ would thus have two event times: $T_i$, the event time for our event of interest, and $C_i$, the event time for the censoring event.  Whenever the censoring event occurs before our event of interest, we can only observe the censoring time, as well as the fact that the subject has censored.  Therefore, what we actually observe is the following pair of variables
+\begin{equation}
+    (Y_i, \Delta_i) = (\min(T_i, C_i), \mathbf{1}(T_i \le C_i))
+\end{equation}
+where $Y_i$ is the time until end of follow-up for subject $i$, and $\Delta_i$ is the indicator of if the event of interest was observed.  If $\Delta_i$ was observed to be $0$, then subject $i$ has censored at time $Y_i$. 
+
+\medskip
+More often than not, the subjects can be assumed to be independent, so that $T_i$ are mutually independent, and $C_i$ are mutually independent among subjects.  However, whether $T_i$ and $C_i$ are independent is then an important assumption.  When $T_i$ and $C_i$ are independent, then the censoring is \textit{non-informative}, and there are plethora of methods to infer $T$ without assuming the distribution of $C$.  However, when $T_i$ and $C_i$ are dependent, eg. $T_i$ is the death time of cancer-specific causes and $C_i$ includes the death time due to stroke, then the censoring is mostly \textit{informative}, and it will be impossible to determine the distribution of $T$ based on $(Y,\Delta)$ alone.  We will talk about non-informative censoring more when we try to construct the likelihood of the data in the next section.
