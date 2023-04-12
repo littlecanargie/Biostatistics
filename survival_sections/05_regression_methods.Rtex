@@ -1,6 +1,6 @@
 In addition to modelling the distribution of survival time over the whole population or over a handful of subgroups, often times it is of our interest how covariates are related to the survival, eg. how survival changes as the body mass index (BMI) of a cancer patient increases.  There are two commonly used models that allows us to regress survival on covariates, which we elaborate below:
 
-\subsection{Proportional hazards regression}
+\subsection{Proportional hazards model}
 In proportional hazards regression, it is assumed that a function of covariates $X$ acts \textit{multiplicatively} on the \textit{hazard function}, i.e. most generally
 \begin{equation}
     h(t|X) = h_0(t)g(X) \label{eq: PH}
@@ -79,7 +79,7 @@ Also, we see that the estimate of \texttt{log(shape)}, which is $\log p$ in the 
 
 <<>>=
 
-# Fit a proportional hazards regression with Exponential distribution
+# Fit a proportional hazards model with Exponential distribution
 mod3_exp <- phreg(Surv(time, status >= 1) ~ (trt == 1) + age + sex + factor(edema) + 
                     albumin + ascites + ast + bili + protime, dist = "weibull", 
                   shape = 1, data = pbc)
@@ -89,4 +89,47 @@ mod3_exp
 1-pchisq(2*(logLik(mod3) - logLik(mod3_exp)), 1)
 @
 
-\subsection{Accelerated failure time regression}
+\subsection{Accelerated failure time model}
+Apart from proportional hazards regression, another common approach in parametric survival regression is the \textbf{accelerated failure time (AFT) model}.  As its name suggests, the AFT model assumes that the covariates serves as speed knobs for time, so that the time for some subjects flows faster than others.  
+
+\medskip
+Mathematically, AFT models assume that given a subject with covariate value $X$ (let call them subject $X$), their time would accelerated by a factor of $g(X)$ (which should of course be positive) compared to a subject with reference covariate value.  Now suppose the survival function of the reference subject is $S_0(.)$, then at time $t$, the survival probability for the subject $X$ is already $S_0(g(X)t)$, since their time flows $g(X)$ times faster.  Therefore, we have the following relation for AFT models:
+\[S(t|X) = S_0(g(X)t) \label{eq: AFT_S}\]
+Based on \Cref{eq: AFT_S}, we have
+\begin{gather}
+    f(t|X) = -\frac{\partial}{\partial t} S(t|X) = g(X)\Big(-\frac{\partial}{\partial (g(X)t)}S_0(g(X)t)\Big) = g(X)f_0(g(X)t) \label{eq: AFT_F}\\
+    h(t|X) = \frac{f(t|X)}{S(t|X)} = \frac{g(X)f_0(g(X)t)}{S_0(g(X)t)} = g(X)\frac{f_0(g(X)t)}{S_0(g(X)t)} = g(X)h(g(X)t) \label{eq: AFT_h}
+\end{gather}
+where $f_0(.)$ and $h_0(.)$ are the probability density function and hazard function for the reference subject.  An alternative, commonly seen definition for AFT models is based on the relationship between random variables for survival time.  Suppose we denote the survival time for a reference subject is $T_0$, then we can define the survival time for "subject $X$" as:
+\begin{equation}
+    \log T = -g(X) + \log T_0
+\end{equation}
+which implies,
+\begin{equation}
+    T = \frac{T_0}{g(X)}
+\end{equation}
+This definition is equivalent to our definition based on survival functions, since by definition,
+\begin{equation}
+    S(t|X) = \P(T > t) = \P\Big(\frac{T_0}{g(X)} > t\Big) = \P(T_0 > g(X)t) = S_0(g(X)t)
+\end{equation}
+
+Just as in proportional hazards models, often we would want $g(X)$ to be related to $X\beta$, the linear combination of elements in $X$.  Since $g(X)$ must be positive, an intuitive choice is to let $g(X) = \exp(X\beta)$, so from \Cref{eq: AFT_S,eq: AFT_F,eq: AFT_h}, we have
+\begin{align}
+    S(t|X) &= S_0(\exp(X\beta)t)\\
+    f(t|X) &= \exp(X\beta)f_0(\exp(X\beta)t)\\
+    h(t|X) &= \exp(X\beta)h_0(\exp(X\beta)t)
+\end{align}
+which can be plugged into the likelihood functions in parametric inference.  Also, using the form of $g(X)$, we can express the mean survival time ($\mu_T$) and median survival time ($m_T$) as
+\begin{gather}
+    \mu_T = \E[T] = \E\Big[\frac{T_0}{\exp(X\beta)}\Big] = \E[T_0]\exp(-X\beta) \label{eq: AFT_mu}\\
+    S(m_T) = S_0(\exp(X\beta)m_T) = 1/2 \quad \Rightarrow \quad m_T = S_0^{-1}(1/2)\exp(-X\beta) \label{eq: AFT_m}
+\end{gather}
+Under this circumstance, suppose we can write $X$ as $\T{(X_1, X_2,..., X_p)}$ and $\beta$ as $\T{(\beta_1, \beta_2, ..., \beta_p)}$, then for two subjects with covariates $\T{(x_1, x_2, ..., x_j+1, ..., x_p)}$ and $\T{(x_1, x_2, ..., x_j, ..., x_p)}$, the ratio of their mean survival time would be, from \Cref{eq: AFT_mu}
+\begin{equation}
+    \frac{\E[T_0]\exp(-x_1\beta_1 - x_2\beta_2 \cdots - (x_j+1)\beta_j \cdots - x_p\beta_p)}{\E[T_0]\exp(-x_1\beta_1 - x_2\beta_2 \cdots - x_j\beta_j \cdots - x_p\beta_p)} = \frac{-\exp((x_j+1)\beta_j)}{-\exp(x_j\beta_j)} = \exp(-\beta_j)
+\end{equation}
+Similarly, the ratio of their medial survival time would also be, from \Cref{eq: AFT_m}
+\begin{equation}
+    \frac{S_0^{-1}(1/2)\exp(-x_1\beta_1 - x_2\beta_2 \cdots - (x_j+1)\beta_j \cdots - x_p\beta_p)}{S_0^{-1}(1/2)\exp(-x_1\beta_1 - x_2\beta_2 \cdots - x_j\beta_j \cdots - x_p\beta_p)} = \frac{-\exp((x_j+1)\beta_j)}{-\exp(x_j\beta_j)} = \exp(-\beta_j)
+\end{equation}
+Therefore, when covariates other than $x_j$ is held constant and $x_j$ is incremented by $1$, then both the mean and median survival time is \textit{shortened} by a ratio of $\exp(-\beta_j)$, which is considered easier to interpret than hazard ratios by some.
