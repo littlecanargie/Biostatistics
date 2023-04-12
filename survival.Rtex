@@ -50,8 +50,12 @@
 <<child = 'survival_sections/04_parametric_inference.Rtex'>>=
 @
 
-\section{Regression methods for parametric survival analysis}
+\section{Regression Methods for Parametric Survival Analysis}
 <<child = 'survival_sections/05_regression_methods.Rtex'>>=
+@
+
+\section{Nonparametric Inference of Right-Censored Survival Data}
+<<child = 'survival_sections/06_nonparametric_inference.Rtex'>>=
 @
 
 \end{document}

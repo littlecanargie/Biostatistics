@@ -39,7 +39,7 @@ Alternatively, using the fact that hazard function $h(t) = f(t)/S(t)$, we have
 \end{equation}
 Suppose we are only interested in the inference of $\theta_T$.  If $\theta_T$ and $\theta_C$ do not share the same parameters, the second product term does not contribute to the likelihood-based inference of $\theta_T$, since it is only a constant relative to $\theta_T$ in the log-likelihood.  Therefore, our inference can be based on only the first product term
 \begin{equation}
-    L(\theta_T) = \prod_{i} h_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)
+    L(\theta_T) = \prod_{i} h_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T) \label{eq: surv_likelihood}
 \end{equation}
 Or, for the log-likelihood
 \begin{equation}

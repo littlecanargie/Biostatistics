@@ -102,7 +102,7 @@ Based on \Cref{eq: AFT_S}, we have
 \end{gather}
 where $f_0(.)$ and $h_0(.)$ are the probability density function and hazard function for the reference subject.  An alternative, commonly seen definition for AFT models is based on the relationship between random variables for survival time.  Suppose we denote the survival time for a reference subject is $T_0$, then we can define the survival time for "subject $X$" as:
 \begin{equation}
-    \log T = -g(X) + \log T_0
+    \log T = -g(X) + \log T_0 \label{eq: AFT_alt}
 \end{equation}
 which implies,
 \begin{equation}
@@ -113,6 +113,13 @@ This definition is equivalent to our definition based on survival functions, sin
     S(t|X) = \P(T > t) = \P\Big(\frac{T_0}{g(X)} > t\Big) = \P(T_0 > g(X)t) = S_0(g(X)t)
 \end{equation}
 
+The alternative definition for AFT models in \Cref{eq: AFT_alt} is sometimes enticing, since we can strip the mean out of $\log T_0$ so that $\log T_0 = \mu + \varepsilon$ where the mean of the error $\varepsilon$ is zero, and arrive at the following expression
+\begin{equation}
+    \log T = \mu - g(X) + \varepsilon
+\end{equation}
+which implies that if we treat $\log T$ as the outcome, we can use linear or non-linear regression to fit the model, with the conditional mean of $\log T$ modelled to $\mu - g(X)$.
+
+\medskip
 Just as in proportional hazards models, often we would want $g(X)$ to be related to $X\beta$, the linear combination of elements in $X$.  Since $g(X)$ must be positive, an intuitive choice is to let $g(X) = \exp(X\beta)$, so from \Cref{eq: AFT_S,eq: AFT_F,eq: AFT_h}, we have
 \begin{align}
     S(t|X) &= S_0(\exp(X\beta)t)\\
