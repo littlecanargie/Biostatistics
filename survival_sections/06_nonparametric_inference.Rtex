@@ -6,20 +6,51 @@ where $\theta_T$ is the vector of parameters for the survival distribution we as
 \begin{equation}
     L(S_T) = \prod_i h_T(y)^{\delta_i}S_T(y_i)
 \end{equation}
-and our goal is to find a survival distribution function $S_T$ among \textit{all possible survival functions} that maximize the likelihood.  Since we are obtaining our estimator non-parametrically, the MLE for this problem, $\hat{S}_T$, is called the \textit{non-parametric maximum likelihood estimator (NPMLE)}.  Intuitively, to maximize the likelihood, $\hat{S}_T$ would then be a step function only dropping at timepoints where events occur.  The amount that $\hat{S}_T$ drops  
-
-
-To see how Kaplan-Meier estimators are calculated, we suppose that ten patients are followed up for events, and their observed event or censor times are (in month) $1, 1, 4^+, 6, 6^+, 8, 17, 17, 17, 20^+$ ($t^+$ implies censored at time $t$).  We would then have the following life table.
+and our goal is to find a survival distribution function $S_T$ among \textit{all possible survival functions} that maximize the likelihood.  Since we are obtaining our estimator non-parametrically, the MLE for this problem, $\hat{S}_T$, is called the \textit{non-parametric maximum likelihood estimator (NPMLE)}.  Intuitively, to maximize the likelihood, $\hat{S}_T$ would then be a step function only dropping at timepoints where events occur.  In fact, if we order the times where events occurs as $t_1, t_2..., t_m$ and let $t_0 = 0$, the survival function can be written as follows:
+\begin{align}
+  S_T(t) &= \P(T > t)\\
+  &= \P(T > t_m | T > t_{m-1})\P(T > t_{m-1})\\
+  &= \P(T > t_m | T > t_{m-1})\P(T > t_{m-1}| T > t_{m-2})\P(T > t_{m-2})\\
+  & \qquad\qquad\qquad \vdots\\
+  &= \prod_{j=1}^m \P(T > t_j | T > t_{j-1}) := \prod_{j=1}^m h_j
+\end{align}
+where $h_j := \P(T > t_j | T > t_{j-1}$ can be estimated empirically by $\frac{d_j}{R_j}$, where $R_j$ is the number of subjects at risk (still in the study) right before $t_j$, and $d_j$ is the number of subjects experiencing event at time $t_j$.  This is called the \textbf{Kaplan-Meier estimator}.  To see how Kaplan-Meier estimators are calculated, we suppose that ten patients are followed up for events, and their observed event or censor times are (in month) $1, 1, 4^+, 6, 6^+, 8, 17, 17, 17, 20^+$ ($t^+$ implies censored at time $t$).  We would then have the following life table.
 \begin{table}[ht]
     \centering
     \begin{tabular}{ccccc}
         $t_j$ & $R_j$ & $d_j$ & $\hat{h}_j$ & $\hat{S}_j$\\
         \hline
         $1$ & $10$ & $2$ & $2/10$ & $1 \times (1-2/10) = 0.8$\\
-        $4$ & $8$ & $0$ & $0$ & $0.8 \times (1-0) = 0.8$\\
         $6$ & $7$ & $1$ & $1/7$ & $0.8 \times (1-1/7) = 0.69$\\
         $8$ & $5$ & $1$ & $1/5$ & $0.69 \times (1-1/5) = 0.55$\\
-        $17$ & $4$ & $3$ & $3/4$ & $0.55 \times (1-3/4) = 0.14$\\
-        $20$ & $1$ & $0$ & $0$ & $0.14 \times (1-0) = 0.14$
+        $17$ & $4$ & $3$ & $3/4$ & $0.55 \times (1-3/4) = 0.14$
     \end{tabular}
 \end{table}
+This estimated curve can be plotted using R as follows:
+
+<<fig.width=4, fig.height=4, fig.align='center'>>=
+survtime <- c(1,1,4,6,6,8,17,17,17,20)
+event <- c(1,1,0,1,0,1,1,1,1,0)
+km <- survfit(Surv(survtime, event) ~ 1)
+plot(km)
+@
+
+The dotted line in the figure is the pointwise $95\%$ confidence interval for the curve.  Since we have 
+\begin{align}
+  \hat{S}_T(t) &= \prod_{j=1}^m \hat{h}_j\\
+  \ln(\hat{S}_T(t)) &= \sum_{j=1}^m \ln(\hat{h}_j)
+\end{align}
+we have, assuming $\hat{h}_j$ are approximately independent and using the delta method:
+\begin{align}
+  var[\log\hat{S}_T(t)] &= var[\sum_{j=1}^m \log\hat{h}_j]\\
+  &\approx \sum_{j=1}^m var[\log\hat{h}_j]\\
+  &\approx \sum_{j=1}^m var[\hat{h}_j] \frac{1}{(1-\hat{h}_j)^2}
+\end{align}
+Now since $\hat{h}_j$ is an empirical proportion with $R_j$ participants, we can approximate its variance by $\frac{h_j(1-h_j)}{R_j} \approx \frac{\hat{h}_j(1-\hat{h}_j)}{R_j}$.  So we have 
+\begin{equation}
+  var[\log\hat{S}_T(t)] \approx \sum_{j=1}^m \frac{\hat{h}_j(1-\hat{h}_j)}{R_j} \frac{1}{(1-\hat{h}_j)^2} = \sum_{j=1}^m \frac{d_j}{R_j(R_j-d_j)}
+\end{equation}
+Therefore, using the delta method again, we have the \textbf{Greenwood formula}
+\begin{equation}
+  var[\hat{S}_T(t)] \approx var[\log\hat{S}_T(t)](\hat{S}_T(t))^2 = (\hat{S}_T(t))^2 \sum_{j=1}^m \frac{d_j}{R_j(R_j-d_j)}
+\end{equation}
