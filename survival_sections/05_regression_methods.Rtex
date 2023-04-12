@@ -149,3 +149,28 @@ And from \Cref{eq: AFT_h}, the hazard function for the AFT model with $\text{Wei
     &= p\lambda_0^p t^{p-1}\exp(X(p \gamma)) \label{eq: Weib_AFT}
 \end{align}
 Comparing \Cref{eq: Weib_PH,eq: Weib_AFT}, we yield $\beta = p\gamma$.  That is, if both the proportional hazards model and the AFT model are fit with Weibull distribution of shape parameter $p$, then the regression coefficients of the proportional hazards model will be exactly $p$ times the coefficients for the AFT model.  We can verify this with the \texttt{pbc} dataset:
+<<>>=
+vcov.aftreg <- function(mod) mod$var
+# Fit a Weibull PH model and an AFT model with the same set of covariates
+mod_ph <- phreg(Surv(time, status >= 1) ~ (trt == 1) + age + sex, 
+                dist = "weibull", data = pbc)
+mod_aft <- aftreg(Surv(time, status >= 1) ~ (trt == 1) + age + sex, 
+                  dist = "weibull", data = pbc)
+
+# List the estimated regression coefficients
+coef(mod_ph)
+coef(mod_aft)
+
+# List the ratios of coefficients between the PH model and the AFT model
+round(coef(mod_ph) / coef(mod_aft), 3)
+
+# The ratios should be exactly the shape parameter, p
+round(exp(coef(mod_ph)["log(shape)"]), 3)
+
+# List the exponentiated negative regression coefficients for the AFT model
+exp(-coef(mod_aft))
+
+# List the confidence intervals
+exp(-confint(mod_aft))[, c(2,1)]
+@
+The ratios of regression coefficients between the proportional hazards model and the AFT model are all \texttt{1.175}, which is exactly the estimated shape parameter $p$ and confirms our theoretical derivation.  The interpretation for the exponentiated negative coefficients for the AFT model, as we have elaborated earlier, is the ratio of survival time shortening for $1$ unit increment of the corresponding covariate.  For example, the exponentiated negative coefficient for \texttt{age} is \texttt{0.981}, meaning that as the age increase by $1$ year, the patient's expected survival time would be shortened by a factor of \texttt{0.981}.  From its $95\%$ confidence interval \texttt{(0.967, 0.995)}, this factor is significantly away from $1$, meaning that age has a significant influence on event occurence after controlling for treatment and sex.
