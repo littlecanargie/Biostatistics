@@ -40,7 +40,7 @@ Therefore, the survival distribution for a subject of covariate $X$ is $\text{We
 \begin{equation}
     \log \lambda = \log \lambda_0 + X\beta/p
 \end{equation}
-However, if $h_0(t)$ is set a the hazard function for $\text{LN}(\mu, \sigma^2)$, then we have
+However, if $h_0(t)$ is set as the hazard function for $\text{LN}(\mu, \sigma^2)$, then we have
 \begin{gather}
     S_0(t) = 1-\Phi\Big(\frac{\log t - \mu}{\sigma}\Big)\\
     S(t|X) = S_0(t)^{\exp(X\beta)} = \Big[1-\Phi\Big(\frac{\log t - \mu}{\sigma}\Big)\Big]^{\exp(X\beta)}
@@ -133,3 +133,19 @@ Similarly, the ratio of their medial survival time would also be, from \Cref{eq:
     \frac{S_0^{-1}(1/2)\exp(-x_1\beta_1 - x_2\beta_2 \cdots - (x_j+1)\beta_j \cdots - x_p\beta_p)}{S_0^{-1}(1/2)\exp(-x_1\beta_1 - x_2\beta_2 \cdots - x_j\beta_j \cdots - x_p\beta_p)} = \frac{-\exp((x_j+1)\beta_j)}{-\exp(x_j\beta_j)} = \exp(-\beta_j)
 \end{equation}
 Therefore, when covariates other than $x_j$ is held constant and $x_j$ is incremented by $1$, then both the mean and median survival time is \textit{shortened} by a ratio of $\exp(-\beta_j)$, which is considered easier to interpret than hazard ratios by some.
+
+In contrast to proportional hazards models, most of the common parametric survival distributions are closed under AFT models.  That is, given that $S_0(t)$ belongs to some family of distributions, then most of the time $S(t|X)$ also belongs to the same family of distributions.  For example, suppose $S_0(t)$ is set as the survival function for $\text{LN}(\mu, \sigma^2)$, then we have, from \Cref{eq: AFT_S}
+\begin{equation}
+    S(t|X) = S_0(\exp(X\beta)t) = 1-\Phi\Big(\frac{\log (\exp(X\beta)t) - \mu}{\sigma}\Big) = 1-\Phi\Big(\frac{\log t - (\mu-X\beta)}{\sigma}\Big)
+\end{equation}
+which is the survival function for $\text{LN}(\mu-X\beta, \sigma^2)$.  However, note that even if a family of distribution can be modelled with both the proportional hazards model and the AFT model, the resulting models may not be structurally equivalent.  In fact, it can be show that the Weibull family is \textit{the only} family where a proportional hazards model is also an AFT model.  In particular, previouly we have shown that hazard function for the proportional hazards model with $\text{Weibull}(p, \lambda_0)$ as baseline survival distribution is
+\begin{equation}
+    h_{\text{PH}}(t|X) = p\lambda_0^pt^{p-1}\exp(X\beta) \label{eq: Weib_PH}
+\end{equation}
+And from \Cref{eq: AFT_h}, the hazard function for the AFT model with $\text{Weibull}(p, \lambda_0)$ as baseline survival distribution is
+\begin{align}
+    h_{\text{AFT}}(t|X) &= p\lambda_0^p(\exp(X\gamma)t)^{p-1}\exp(X\gamma)\\
+    &= p\lambda_0^p t^{p-1}[\exp(X\gamma)]^p \\
+    &= p\lambda_0^p t^{p-1}\exp(X(p \gamma)) \label{eq: Weib_AFT}
+\end{align}
+Comparing \Cref{eq: Weib_PH,eq: Weib_AFT}, we yield $\beta = p\gamma$.  That is, if both the proportional hazards model and the AFT model are fit with Weibull distribution of shape parameter $p$, then the regression coefficients of the proportional hazards model will be exactly $p$ times the coefficients for the AFT model.  We can verify this with the \texttt{pbc} dataset:
