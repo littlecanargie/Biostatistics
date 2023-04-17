@@ -121,6 +121,7 @@ $T \ge t_j$.  In turn, $h_j := \P(T = t_j | T \ge t_j)$ can be estimated empiric
         $4$ & $17$ & $4$ & $3$ & $3/4$ & $0.55 \times (1-3/4) = 0.14$
     \end{tabular}
 \end{table}
+
 This estimated curve can be plotted using R as follows:
 
 <<fig.width=4, fig.height=4, fig.align='center'>>=
