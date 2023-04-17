@@ -208,3 +208,4 @@ which, after tranformation back to $S_T(t)$, has the following confidence interv
     \medskip
     Now we have shown that $\Tilde{S}_T$ cannot drop between timepoints and at timespoints with $d_j = 0, c_j \ne 0$ (with the technical exceptions after $t_m$ when $c_m \ne 0$), the only fact left to be proven is that $\Tilde{S}_T(0) = 1$. 
 \end{comment}
+
