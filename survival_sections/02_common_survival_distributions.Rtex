@@ -55,6 +55,7 @@ legend(4, 2, legend = c(expression(paste(alpha, " = 2")),
        lty = 1, col = c("red","black","blue"))
 @
 
+\pagebreak
 \noindent\underline{\textbf{Weibull distribution}}
 
 \medskip

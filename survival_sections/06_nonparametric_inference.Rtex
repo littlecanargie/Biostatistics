@@ -1,29 +1,124 @@
-Previously we have shown that as long as the censoring is non-informative, we can write the likelihood of the data $\{(y_i, \delta_i)\}_{i=1}^n$ as in \Cref{eq: surv_likelihood}:
+\subsection{Kaplan-Meier estimator and Greenwood's formula}
+Previously we have shown that as long as the censoring is non-informative, we can write the likelihood of the data $\{(y_i, \delta_i)\}_{i=1}^n$ as:
 \begin{equation}
-    L(\theta_T) = \prod_i h_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)
+    L(\theta_T) = \prod_{i=1}^n f_T(y_i; \theta_T)^{\delta_i}S_T(y_i; \theta_T)^{1-\delta_i}
 \end{equation}
 where $\theta_T$ is the vector of parameters for the survival distribution we assumed for the event.  Now suppose instead we do not want to make parametric assumptions, so that now we have the likelihood
 \begin{equation}
-    L(S_T) = \prod_i h_T(y)^{\delta_i}S_T(y_i)
+    L(S_T) = \prod_{i=1}^n f_T(y_i)^{\delta_i}S_T(y_i)^{1-\delta_i}
 \end{equation}
-and our goal is to find a survival distribution function $S_T$ among \textit{all possible survival functions} that maximize the likelihood.  Since we are obtaining our estimator non-parametrically, the MLE for this problem, $\hat{S}_T$, is called the \textit{non-parametric maximum likelihood estimator (NPMLE)}.  Intuitively, to maximize the likelihood, $\hat{S}_T$ would then be a step function only dropping at timepoints where events occur.  In fact, if we order the times where events occurs as $t_1, t_2..., t_m$ and let $t_0 = 0$, the survival function can be written as follows:
+and our goal is to find a survival distribution function $S_T$ among \textit{all possible survival functions} that maximize the likelihood.  Since we are obtaining our estimator non-parametrically, the MLE for this problem, $\hat{S}_T$, is called the \textit{non-parametric maximum likelihood estimator (NPMLE)}. 
+
+Intuitively, to maximize the likelihood, $\hat{S}_T$ would be a step function only dropping at timepoints where events occur.  To see this, first we define some notations: let $v_1, v_2, ..., v_m$ be distinct ordered timepoints from the set of observations $y_1, y_2, ..., y_n$, and suppose at time $v_j$, $d_j$ subjects experienced events and $c_j$ subjects were censored.  Also by convention we let $v_0 = 0, d_0 = 0, c_0 = 0$ and $v_{m+1} = \infty, d_{m+1} = 0, c_{m+1} = 0$.  With the new notations, the likeihood $L(S_T)$ can be rewritten as
+\begin{equation}
+    L(S_T) = \prod_{j=0}^{m+1} f_T(v_j)^{d_j}S_T(v_j)^{c_j}
+\end{equation}
+Now suppose $S_T$ is \textit{any} viable survival function.  Given $k, l \in \{0, 1, 2,...,m\}$ where $k < l$, we now try to improve $S_T$ to $\Tilde{S}_T$ within $t \in [v_k, v_l)$ by maximizing $L(\Tilde{S}_T)$.  Since $\Tilde{S}_T$ is held equal to $S_T$ outside of $[v_k, v_l)$, we only have to maximize the part of the likelihood related to the value of $\Tilde{S}_T$ within $[v_k, v_l)$, which is 
+\begin{equation}
+    L^{kl}(\Tilde{S}_T) = \Big[\prod_{j=k}^{l-1}\Tilde{f}_T(v_j)^{d_j}\Tilde{S}_T(v_j)^{c_j}\Big]\Tilde{f}_T(v_l)^{d_l}
+\end{equation}
+
+First let us set $k,l$ so that there are events at both ends of $[v_k, v_l)$ and no events within $[v_k, v_l)$, i.e. $(d_k \ne 0, d_l \ne 0) \wedge (d_j = 0, \forall k < j < l)$.  Under this setting, we have the partial likelihood
+\begin{equation}
+    L^{kl}(\Tilde{S}_T) = \Tilde{f}_T(v_k)^{d_k}\Big[\prod_{j=k}^{l-1}\Tilde{S}_T(v_j)^{c_j}\Big]\Tilde{f}_T(v_l)^{d_l}
+\end{equation}
+This partial likelihood implies that \underline{$\Tilde{S}_T$ cannot drop down within the eventless interval $(v_k, v_l)$}, i.e. $\Tilde{S}_T(t) = \Tilde{S}_T(v_k), \; \forall t \in (v_k, v_l)$.  To see this, suppose the condition is violated so that $\Tilde{S}_T(v_l^-) < \Tilde{S}_T(v_k)$.  We can thus define another survival function $\Tilde{S}_T$ by
+\begin{align}
+    \Tilde{S}^*_T(t) = \Tilde{S}_T(v_k)&, \quad t \in (v_k, v_l)\\
+    \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
+\end{align}
+Based on the definition, we have the following equalities and inequalities, where $k < j < l$:
+\begin{gather}
+    \Tilde{S}^*_T(v_k) = \Tilde{S}_T(v_k)\\
+    \Tilde{f}^*_T(v_k) = \Tilde{S}^*_T(v_k^-) - \Tilde{S}^*_T(v_k) = \Tilde{S}_T(v_k^-) - \Tilde{S}_T(v_k) = \Tilde{f}_T(v_k)\\
+    \Tilde{S}^*_T(v_j) = \Tilde{S}_T(v_k) \ge \Tilde{S}_T(v_j)\\
+    \Tilde{f}^*_T(v_l) = \Tilde{S}^*_T(v_l^-) - \Tilde{S}^*_T(v_l) = \Tilde{S}_T(v_k) - \Tilde{S}_T(v_l) > \Tilde{S}_T(v_l^-) - \Tilde{S}_T(v_l) =  \Tilde{f}_T(v_l)
+\end{gather}
+Therefore, we have
+\begin{equation}
+    L^{kl}(\Tilde{S}_T^*) = \Tilde{f}^*_T(v_k)^{d_k}\Big[\prod_{j=k}^{l-1}\Tilde{S}^*_T(v_j)^{c_j}\Big]\Tilde{f}^*_T(v_l)^{d_l} > \Tilde{f}_T(v_k)^{d_k}\Big[\prod_{j=k}^{l-1}\Tilde{S}_T(v_j)^{c_j}\Big]\Tilde{f}_T(v_l)^{d_l} = L^{kl}(\Tilde{S}_T)
+\end{equation}
+which contradicts with the fact that $\Tilde{S}_T$ maximizes the partial likelihood $L^{kl}$.  
+
+\medskip
+Second, let us set $k = 0$ and let $l$ be the first timepoint with event occurrence, i.e. $(d_l \ne 0) \wedge (d_j = 0,\; \forall j < l)$, then we have the partial likelihood
+\begin{equation}
+    L^{0l}(\Tilde{S}_T) = \Big[\prod_{j=1}^{l-1}\Tilde{S}_T(v_j)^{c_j}\Big]\Tilde{f}_T(v_l)^{d_l}
+\end{equation}
+This partial likelihood implies that \underline{$\Tilde{S}_T$ should remain at $1$ until the first event occurs}, i.e. $\Tilde{S}_T(t) = 1, \forall t < v_l$.  To see this, suppose the condition is violated so that $\Tilde{S}_T(v_l^-) < 1$.  We can thus define another survival function $\Tilde{S}^*_T$ by 
+\begin{align}
+    \Tilde{S}^*_T(t) = 1&, \quad t < v_l\\
+    \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
+\end{align}
+Based on the definition, we have the following equalities and inequalities, where $0 < j < l$:
+\begin{gather}
+    \Tilde{S}^*_T(v_j) = 1 \ge \Tilde{S}_T(v_j)\\
+    \Tilde{f}^*_T(v_l) = \Tilde{S}^*_T(v_l^-) - \Tilde{S}^*_T(v_l) = 1 - \Tilde{S}_T(v_l) > \Tilde{S}_T(v_l^-) - \Tilde{S}_T(v_l) =  \Tilde{f}_T(v_l)
+\end{gather}
+Therefore, we have
+\begin{equation}
+    L^{0l}(\Tilde{S}_T^*) = \Big[\prod_{j=1}^{l-1}\Tilde{S}^*_T(v_j)^{c_j}\Big]\Tilde{f}^*_T(v_l)^{d_l} > \Big[\prod_{j=1}^{l-1}\Tilde{S}_T(v_j)^{c_j}\Big]\Tilde{f}_T(v_l)^{d_l} = L^{01}(\Tilde{S}_T)
+\end{equation}
+which contradicts with the fact that $\Tilde{S}_T$ maximizes the partial likelihood $L^{0l}$.  
+
+\medskip
+At last, we set $l = m+1$ and let $k$ be the last timepoint with event occurrene, i.e. $(d_k \ne 0) \wedge (d_j = 0, \; \forall j > k)$, then we have the partial likelihood:
+\begin{equation}
+    L^{k(m+1)}(\Tilde{S}_T) = \Tilde{f}_T(v_k)^{d_k}\Big[\prod_{j=k}^{m}\Tilde{S}_T(v_j)^{c_j}\Big]
+\end{equation}
+This partial likelihood implies that \underline{$\Tilde{S}_T$ should not drop after the last event until the end of follow-up}, i.e. $\Tilde{S}_T(t) = \Tilde{S}_T(v_k), \; \forall t,  v_k < t \le v_m$. To see this, suppose the condition is violated so that $\Tilde{S}_T(v_m) < \Tilde{S}_T(v_k)$ where $v_k < v_m$. We thus may define another survival function $\Tilde{S}^*_T$ by
+\begin{align}
+    \Tilde{S}^*_T(t) = \Tilde{S}_T(v_k)&, \quad v_k < t \le v_m\\
+    \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
+\end{align}
+Based on the definition, we have the following equalities and inequalities, where $k < j < m$:
+\begin{gather}
+    \Tilde{S}^*_T(v_k) = \Tilde{S}_T(v_k)\\
+    \Tilde{f}^*_T(v_k) = \Tilde{S}^*_T(v_k^-) - \Tilde{S}^*_T(v_k) = \Tilde{S}_T(v_k^-) - \Tilde{S}_T(v_k) = \Tilde{f}_T(v_k)\\
+    \Tilde{S}^*_T(v_j) = \Tilde{S}_T(v_k) \ge \Tilde{S}_T(v_j)\\
+    \Tilde{S}^*_T(v_m) = \Tilde{S}_T(v_k) > \Tilde{S}_T(v_m)\\
+\end{gather}
+Therefore, we have
+\begin{equation}
+    L^{k(m+1)}(\Tilde{S}_T^*) = \Tilde{f}^*_T(v_k)^{d_k}\Big[\prod_{j=k}^{m}\Tilde{S}^*_T(v_j)^{c_j}\Big] > \Tilde{f}_T(v_k)^{d_k}\Big[\prod_{j=k}^{m}\Tilde{S}_T(v_j)^{c_j}\Big] = L^{k(m+1)}(\Tilde{S}_T)
+\end{equation}
+which contradicts with the fact that $\Tilde{S}_T$ maximizes the partial likelihood $L^{k(m+1)}$.  
+
+\medskip
+From the three observations above, we see the NPMLE for $S_T$ is a step function that can only drop at timepoints with event occurence (A technicality here is that when there are subjects censored at $v_m$, i.e. at the longest time of follow-up, the survival function \textit{can} drop at $t > v_m$ without affecting the likelihood.  In fact, in this case the NPMLE for $S_T$ is only identified up until $v_m$, and any valid survival function after $v_m$ does not influence the likelihood).  Therefore, we can reduce our NPMLE problem to a MLE problem with finite number of parameters. 
+ Let $t_1, t_2..., t_q$ be the ordered timepoints where events occured, then we can reparameterize $S_T$ as 
+\begin{equation}
+    S_T(t) = \prod_{j, \;t_j \le t}(1-h_j) \label{eq: MLE_KM}
+\end{equation}
+where $0 \le h_j \le 1$, so that the survival function only drops at timepoints where events occured.
+
+To find the MLE for the parameterization in \Cref{eq: MLE_KM} heuristically, note that the survival function can also be decomposed as follows, denoting $r$ as the largest integer satisfying $t_r \le t$:
 \begin{align}
   S_T(t) &= \P(T > t)\\
-  &= \P(T > t_m | T > t_{m-1})\P(T > t_{m-1})\\
-  &= \P(T > t_m | T > t_{m-1})\P(T > t_{m-1}| T > t_{m-2})\P(T > t_{m-2})\\
-  & \qquad\qquad\qquad \vdots\\
-  &= \prod_{j=1}^m \P(T > t_j | T > t_{j-1}) := \prod_{j=1}^m h_j
+  &= \P(T > t | T > t_r) \P(T > t_r)\\
+  &= \P(T > t | T > t_r) \P(T > t_r | T > t_{r-1})\P(T > t_{r-1})\\
+  & \qquad\qquad\qquad\qquad\qquad \vdots\\
+  &= \P(T > t | T > t_r) \prod_{j=1}^r \P(T > t_j | T > t_{j-1}) \label{eq: MLE_KM_est}
 \end{align}
-where $h_j := \P(T > t_j | T > t_{j-1}$ can be estimated empirically by $\frac{d_j}{R_j}$, where $R_j$ is the number of subjects at risk (still in the study) right before $t_j$, and $d_j$ is the number of subjects experiencing event at time $t_j$.  This is called the \textbf{Kaplan-Meier estimator}.  To see how Kaplan-Meier estimators are calculated, we suppose that ten patients are followed up for events, and their observed event or censor times are (in month) $1, 1, 4^+, 6, 6^+, 8, 17, 17, 17, 20^+$ ($t^+$ implies censored at time $t$).  We would then have the following life table.
+The estimated $\P(T > t | T > t_r)$ would be $1$ since empirically there are no events within $(t_r,t]$.  Comparing \Cref{eq: MLE_KM,eq: MLE_KM_est}, we have the following relation
+\begin{align}
+    h_j &= 1-\P(T>t_j|T>t_{j-1})\\
+    &= \P(T \le t_j|T>t_{j-1})\\
+    &= \P(T \le t_j|T \ge t_j,T > t_{j-1})\P(T \ge t_j, t_{j-1})\\
+    &= \P(T \le t_j|T \ge t_j) \label{eq: KM_explain}\\
+    &= \P(T = t_j|T \ge t_j)
+\end{align}
+where in \Cref{eq: KM_explain}, since empirically there are no events within $(t_{j-1}, t_j]$, $T > t_{j-1}$ is equivalent to 
+$T \ge t_j$.  In turn, $h_j := \P(T = t_j | T \ge t_j)$ can be estimated empirically by $\frac{d_j}{R_j}$, where $R_j$ is the number of subjects at risk (still in the study) right before $t_j$, and $d_j$ is the number of subjects experiencing event at time $t_j$.  This is called the \textbf{Kaplan-Meier estimator}.  To see how Kaplan-Meier estimators are calculated, we suppose that ten patients are followed up for events, and their observed event or censor times are (in month) $1, 1, 4^+, 6, 6^+, 8, 17, 17, 17, 20^+$ ($t^+$ implies censored at time $t$).  We would then have the following life table.
 \begin{table}[ht]
     \centering
-    \begin{tabular}{ccccc}
-        $t_j$ & $R_j$ & $d_j$ & $\hat{h}_j$ & $\hat{S}_j$\\
+    \begin{tabular}{cccccc}
+        $j$ & $t_j$ & $R_j$ & $d_j$ & $\hat{h}_j$ & $\hat{S}_j$\\
         \hline
-        $1$ & $10$ & $2$ & $2/10$ & $1 \times (1-2/10) = 0.8$\\
-        $6$ & $7$ & $1$ & $1/7$ & $0.8 \times (1-1/7) = 0.69$\\
-        $8$ & $5$ & $1$ & $1/5$ & $0.69 \times (1-1/5) = 0.55$\\
-        $17$ & $4$ & $3$ & $3/4$ & $0.55 \times (1-3/4) = 0.14$
+        $1$ & $1$ & $10$ & $2$ & $2/10$ & $1 \times (1-2/10) = 0.8$\\
+        $2$ & $6$ & $7$ & $1$ & $1/7$ & $0.8 \times (1-1/7) = 0.69$\\
+        $3$ & $8$ & $5$ & $1$ & $1/5$ & $0.69 \times (1-1/5) = 0.55$\\
+        $4$ & $17$ & $4$ & $3$ & $3/4$ & $0.55 \times (1-3/4) = 0.14$
     \end{tabular}
 \end{table}
 This estimated curve can be plotted using R as follows:
@@ -35,22 +130,80 @@ km <- survfit(Surv(survtime, event) ~ 1)
 plot(km)
 @
 
-The dotted line in the figure is the pointwise $95\%$ confidence interval for the curve.  Since we have 
+The dotted line in the figure is the pointwise $95\%$ confidence interval for the curve.  To derive the formulae for the confidence intervals, first note the Kaplan-Meier estimator is
+\begin{equation}
+  \hat{S}_T(t) = \prod_{j,\; t_j \le t} (1-\hat{h}_j)
+\end{equation}
+Working with products is more difficult than working with sums, so we take the natural logarithm on both sides and yield
+\begin{equation}
+  \log(\hat{S}_T(t)) = \sum_{j,\; t_j \le t} \log(1-\hat{h}_j)
+\end{equation}
+Now assuming $\hat{h}_j$ are approximately mutually independent and using the delta method, we have:
 \begin{align}
-  \hat{S}_T(t) &= \prod_{j=1}^m \hat{h}_j\\
-  \ln(\hat{S}_T(t)) &= \sum_{j=1}^m \ln(\hat{h}_j)
-\end{align}
-we have, assuming $\hat{h}_j$ are approximately independent and using the delta method:
-\begin{align}
-  var[\log\hat{S}_T(t)] &= var[\sum_{j=1}^m \log\hat{h}_j]\\
-  &\approx \sum_{j=1}^m var[\log\hat{h}_j]\\
-  &\approx \sum_{j=1}^m var[\hat{h}_j] \frac{1}{(1-\hat{h}_j)^2}
+  var[\log(\hat{S}_T(t))] &= var[\sum_{j, \; t_j \le t} \log(1-\hat{h}_j)]\\
+  &\approx \sum_{j, \; t_j \le t} var[\log(1-\hat{h}_j)]\\
+  &\approx \sum_{j, \; t_j \le t} var[\hat{h}_j] \frac{1}{(1-\hat{h}_j)^2}
 \end{align}
 Now since $\hat{h}_j$ is an empirical proportion with $R_j$ participants, we can approximate its variance by $\frac{h_j(1-h_j)}{R_j} \approx \frac{\hat{h}_j(1-\hat{h}_j)}{R_j}$.  So we have 
 \begin{equation}
-  var[\log\hat{S}_T(t)] \approx \sum_{j=1}^m \frac{\hat{h}_j(1-\hat{h}_j)}{R_j} \frac{1}{(1-\hat{h}_j)^2} = \sum_{j=1}^m \frac{d_j}{R_j(R_j-d_j)}
+  var[\log(\hat{S}_T(t))] \approx \sum_{j, \; t_j < t} \frac{\hat{h}_j(1-\hat{h}_j)}{R_j} \frac{1}{(1-\hat{h}_j)^2} = \sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)} \label{eq: logKM_var}
 \end{equation}
-Therefore, using the delta method again, we have the \textbf{Greenwood formula}
+Therefore, using the delta method again, we have the \textbf{Greenwood's formula}
 \begin{equation}
-  var[\hat{S}_T(t)] \approx var[\log\hat{S}_T(t)](\hat{S}_T(t))^2 = (\hat{S}_T(t))^2 \sum_{j=1}^m \frac{d_j}{R_j(R_j-d_j)}
+  var[\hat{S}_T(t)] \approx var[\log\hat{S}_T(t)](\hat{S}_T(t))^2 \approx (\hat{S}_T(t))^2 \sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}
 \end{equation}
+and the (pointwise) asymptotmic $(1-\alpha)$ confidence interval for $S_T(t)$ can be constructed as 
+\begin{equation}
+    \Bigg(\hat{S}_T(t) \pm Z_{1-\alpha/2} \hat{S}_T(t) \sqrt{\sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}}\Bigg) \label{eq: Greenwood_suboptimal}
+\end{equation}
+
+\medskip
+Eminent students may notice that \Cref{eq: Greenwood_suboptimal} can produce a confidence interval that is outside of $[0, 1]$ (especially when the number of events is small), which is unreasonable since survival functions should be bound between $0$ and $1$.  A commonly used strategy is to construct the confidence interval for $\log(-\log(S_T(t)))$ first since the function $\log(-\log(.))$ is bijective and maps $[0,1]$ to the real number line (and $\pm \infty$).  From \Cref{eq: logKM_var} using delta method again, we have
+\begin{equation}
+    var[\log(-\log(\hat{S}_T(t)))] \approx var[\log(\hat{S}_T(t))] \Big[\frac{-1}{\log(\hat{S}_T(t))}\Big]^2 \approx \frac{1}{[\log(\hat{S}_T(t))]^2} \sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}
+\end{equation}
+So the (pointwise) asymptotic $(1-\alpha)$ confidence interval for $\log(-\log(S_T(t)))$ is
+\begin{equation}
+    \Bigg(\log(-\log(\hat{S}_T(t))) \mp Z_{1-\alpha/2} \frac{1}{\log(\hat{S}_T(t))} \sqrt{\sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}}\Bigg)
+\end{equation}
+which, after tranformation back to $S_T(t)$, has the following confidence interval
+\begin{equation}
+    \Bigg([\hat{S}_T(t)]^{\exp\Big(\pm Z_{1-\alpha/2} \frac{1}{\log(\hat{S}_T(t))} \sqrt{\sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}}\Big)} \Bigg)
+\end{equation}
+
+\begin{comment}
+    \begin{gather}
+        \Tilde{S}_T(t_j) \le \Tilde{S}_T(t_k)\\
+        \Tilde{f}_T(t_l) = \Tilde{S}_T(t_l^-) - \Tilde{S}_T(t_l) \le \Tilde{S}_T(t_k) - \Tilde{S}_T(t_l)
+    \end{gather}
+    
+    A first observation is that $\Tilde{S}_T(t) = \Tilde{S}_T(t_j)$ for all $t \in (t_j, t_{j+1})$, i.e. $\Tilde{S}_T(t)$ cannot drop between timepoints observing events or censors.  To see this, suppose this condition is violated so that $\Tilde{S}_T(t_{j+1}^-) < \Tilde{S}_T(t_j)$, then we can always construct another survival function $\Tilde{S}^*_T(t)$ where
+    \begin{align}
+        \Tilde{S}^*_T(t) = \Tilde{S}_T(t_j)&, \quad t \in (t_j, t_{j+1})\\
+        \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
+    \end{align}
+    Then immediately, $\Tilde{S}^*_T(t_{j+1}^-) = \Tilde{S}_T(t_j) > \Tilde{S}_T(t_{j+1}^-)$.  Also, $\Tilde{f}^*_T(t_{j+1}) = \Tilde{S}^*_T(t_{j+1}^-) - \Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_j) - \Tilde{S}_T(t_{j+1}) > \Tilde{S}_T(t_{j+1}^-)-\Tilde{S}_T(t_{j+1}) = \Tilde{f}^T(t_{j+1})$.  Therefore, as long as $d_{j+1}$ and $c_{j+1}$ are not both $0$:
+    \begin{align}
+        L^j(\Tilde{S}^*_T) &= [\Tilde{f}^*_T(t_j)^{d_j}\Tilde{S}^*_T(t_j)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}^*_T(t_{j+1})^{c_{j+1}}]\\
+        &> [\Tilde{f}_T(t_j)^{d_j}\Tilde{S}_T(t_j)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}] = L^j(\Tilde{S}_T)
+    \end{align}
+    So $\Tilde{S}_T$ does not maximize the likelihood, leading to contradiction.  (A technicality here is that when $j = m$, then it is true that $d_{j+1}c_{j+1} = 0$, so when there are subjects censored at $t_j$, i.e. at the longest time of follow-up, the survival function \textit{can} drop between $t_j$ and $t_{j+1} = \infty$ without affecting the likelihood.  In fact, in this case the NPMLE for $S_T$ is only identified up until $t_{j+1}$, and any valid survival function after $t_{j+1}$ does not influence the likelihood).
+    
+    \medskip
+    A second observation is that if $d_j = 0$ and $c_j \ne 0$, then $\Tilde{S}_T(t_j) = \Tilde{S}_T(t_j^-)$, i.e. $\Tilde{S}_T(t)$ cannot drop at timepoints with purely censored subjects.  To see this, suppose this condition is violated so that $\Tilde{S}_T(t) = \Tilde{S}_T(t_j) < \Tilde{S}_T(t_j^-)$ for all $t \in (t_j, t_{j+1})$ (the first equality should hold from our previous observation), then we can always construct another survival function $\Tilde{S}^*_T(t)$ where
+    \begin{align}
+        \Tilde{S}^*_T(t) = \Tilde{S}_T(t_j^-)&, \quad t \in [t_j, t_{j+1})\\
+        \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
+    \end{align}
+    Then we have $\Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_{j+1})$ and $\Tilde{f}^*_T(t_{j+1}) = \Tilde{S}^*_T(t_{j+1}^-) - \Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_j^-) - \Tilde{S}_T(t_{j+1}) > \Tilde{S}_T(t_{(j+1)}^-) -\Tilde{S}_T(t_{j+1}) = \Tilde{f}^T(t_{j+1})$.  Now since $d_j = 0, c_j \ne 0$,
+    \begin{align}
+        L^j(\Tilde{S}^*_T) &= [\Tilde{S}^*_T(t_j)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}^*_T(t_{j+1})^{c_{j+1}}]\\
+        &= [\Tilde{S}_T(t_j^-)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]\\
+        &\ge [\Tilde{S}_T(t_j^-)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]\\
+        &> [\Tilde{S}_T(t_j)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]= L^j(\Tilde{S}_T)
+    \end{align}
+    which gives us another contradiction. 
+    
+    \medskip
+    Now we have shown that $\Tilde{S}_T$ cannot drop between timepoints and at timespoints with $d_j = 0, c_j \ne 0$ (with the technical exceptions after $t_m$ when $c_m \ne 0$), the only fact left to be proven is that $\Tilde{S}_T(0) = 1$. 
+\end{comment}
