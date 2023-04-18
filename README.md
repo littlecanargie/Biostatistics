@@ -1,4 +1,4 @@
-# Calculus
+# Biostatistics
 
 - This repository contains latex codes for the materials used in my course *Biostatistics* at National Dong Hwa University, Taiwan.  (Ongoing developement!)
 
