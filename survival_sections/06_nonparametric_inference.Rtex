@@ -172,40 +172,7 @@ which, after tranformation back to $S_T(t)$, has the following confidence interv
     \Bigg([\hat{S}_T(t)]^{\exp\Big(\pm Z_{1-\alpha/2} \frac{1}{\log(\hat{S}_T(t))} \sqrt{\sum_{j, \; t_j < t} \frac{d_j}{R_j(R_j-d_j)}}\Big)} \Bigg)
 \end{equation}
 
-\begin{comment}
-    \begin{gather}
-        \Tilde{S}_T(t_j) \le \Tilde{S}_T(t_k)\\
-        \Tilde{f}_T(t_l) = \Tilde{S}_T(t_l^-) - \Tilde{S}_T(t_l) \le \Tilde{S}_T(t_k) - \Tilde{S}_T(t_l)
-    \end{gather}
-    
-    A first observation is that $\Tilde{S}_T(t) = \Tilde{S}_T(t_j)$ for all $t \in (t_j, t_{j+1})$, i.e. $\Tilde{S}_T(t)$ cannot drop between timepoints observing events or censors.  To see this, suppose this condition is violated so that $\Tilde{S}_T(t_{j+1}^-) < \Tilde{S}_T(t_j)$, then we can always construct another survival function $\Tilde{S}^*_T(t)$ where
-    \begin{align}
-        \Tilde{S}^*_T(t) = \Tilde{S}_T(t_j)&, \quad t \in (t_j, t_{j+1})\\
-        \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
-    \end{align}
-    Then immediately, $\Tilde{S}^*_T(t_{j+1}^-) = \Tilde{S}_T(t_j) > \Tilde{S}_T(t_{j+1}^-)$.  Also, $\Tilde{f}^*_T(t_{j+1}) = \Tilde{S}^*_T(t_{j+1}^-) - \Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_j) - \Tilde{S}_T(t_{j+1}) > \Tilde{S}_T(t_{j+1}^-)-\Tilde{S}_T(t_{j+1}) = \Tilde{f}^T(t_{j+1})$.  Therefore, as long as $d_{j+1}$ and $c_{j+1}$ are not both $0$:
-    \begin{align}
-        L^j(\Tilde{S}^*_T) &= [\Tilde{f}^*_T(t_j)^{d_j}\Tilde{S}^*_T(t_j)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}^*_T(t_{j+1})^{c_{j+1}}]\\
-        &> [\Tilde{f}_T(t_j)^{d_j}\Tilde{S}_T(t_j)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}] = L^j(\Tilde{S}_T)
-    \end{align}
-    So $\Tilde{S}_T$ does not maximize the likelihood, leading to contradiction.  (A technicality here is that when $j = m$, then it is true that $d_{j+1}c_{j+1} = 0$, so when there are subjects censored at $t_j$, i.e. at the longest time of follow-up, the survival function \textit{can} drop between $t_j$ and $t_{j+1} = \infty$ without affecting the likelihood.  In fact, in this case the NPMLE for $S_T$ is only identified up until $t_{j+1}$, and any valid survival function after $t_{j+1}$ does not influence the likelihood).
-    
-    \medskip
-    A second observation is that if $d_j = 0$ and $c_j \ne 0$, then $\Tilde{S}_T(t_j) = \Tilde{S}_T(t_j^-)$, i.e. $\Tilde{S}_T(t)$ cannot drop at timepoints with purely censored subjects.  To see this, suppose this condition is violated so that $\Tilde{S}_T(t) = \Tilde{S}_T(t_j) < \Tilde{S}_T(t_j^-)$ for all $t \in (t_j, t_{j+1})$ (the first equality should hold from our previous observation), then we can always construct another survival function $\Tilde{S}^*_T(t)$ where
-    \begin{align}
-        \Tilde{S}^*_T(t) = \Tilde{S}_T(t_j^-)&, \quad t \in [t_j, t_{j+1})\\
-        \Tilde{S}^*_T(t) = \Tilde{S}_T(t)&, \quad \text{otherwise}
-    \end{align}
-    Then we have $\Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_{j+1})$ and $\Tilde{f}^*_T(t_{j+1}) = \Tilde{S}^*_T(t_{j+1}^-) - \Tilde{S}^*_T(t_{j+1}) = \Tilde{S}_T(t_j^-) - \Tilde{S}_T(t_{j+1}) > \Tilde{S}_T(t_{(j+1)}^-) -\Tilde{S}_T(t_{j+1}) = \Tilde{f}^T(t_{j+1})$.  Now since $d_j = 0, c_j \ne 0$,
-    \begin{align}
-        L^j(\Tilde{S}^*_T) &= [\Tilde{S}^*_T(t_j)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}^*_T(t_{j+1})^{c_{j+1}}]\\
-        &= [\Tilde{S}_T(t_j^-)^{c_j}][\Tilde{f}^*_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]\\
-        &\ge [\Tilde{S}_T(t_j^-)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]\\
-        &> [\Tilde{S}_T(t_j)^{c_j}][\Tilde{f}_T(t_{j+1})^{d_{j+1}}\Tilde{S}_T(t_{j+1})^{c_{j+1}}]= L^j(\Tilde{S}_T)
-    \end{align}
-    which gives us another contradiction. 
-    
-    \medskip
-    Now we have shown that $\Tilde{S}_T$ cannot drop between timepoints and at timespoints with $d_j = 0, c_j \ne 0$ (with the technical exceptions after $t_m$ when $c_m \ne 0$), the only fact left to be proven is that $\Tilde{S}_T(0) = 1$. 
-\end{comment}
+\subsection{Log-rank test and its derivatives}
+
+Now we have shown how to estimate survival curves non-parametrically, the next question would be how to compare the survival curves between two (or more) groups.  That is, we would like to test for the null hypothesis $H_0: S_0(t) = S_1(t)$, where $S_0(t)$ and $S_1(t)$ are the survival functions for group $0$ and group $1$.  In parametric survival analyses, if the two survival curves belong to the same parametric family, then testing for equivalence of survival curves equates to setting their parameters to be identical, which can be tested using likelihood ratio tests.  However, in non-parameteric survival analyses, although we've shown that the Kaplan-Meier estimator is a non-parametric MLE, since the number of parameters is in principle infinite, regular theories for tests against MLE may not work.
 
