@@ -174,5 +174,110 @@ which, after tranformation back to $S_T(t)$, has the following confidence interv
 
 \subsection{Log-rank test and its derivatives}
 
-Now we have shown how to estimate survival curves non-parametrically, the next question would be how to compare the survival curves between two (or more) groups.  That is, we would like to test for the null hypothesis $H_0: S_0(t) = S_1(t)$, where $S_0(t)$ and $S_1(t)$ are the survival functions for group $0$ and group $1$.  In parametric survival analyses, if the two survival curves belong to the same parametric family, then testing for equivalence of survival curves equates to setting their parameters to be identical, which can be tested using likelihood ratio tests.  However, in non-parameteric survival analyses, although we've shown that the Kaplan-Meier estimator is a non-parametric MLE, since the number of parameters is in principle infinite, regular theories for tests against MLE may not work.
+Now we have shown how to estimate survival curves non-parametrically, the next question would be how to compare the survival curves between two (or more) groups.  That is, we would like to test for the null hypothesis $H_0: S_0(t) = S_1(t)$, where $S_0(t)$ and $S_1(t)$ are the survival functions for group $0$ and group $1$.  In parametric survival analyses, if the two survival curves belong to the same parametric family, then testing for equivalence of survival curves equates to setting their parameters to be identical, which can be tested using likelihood ratio tests.  However, in non-parameteric survival analyses, although we've shown that the Kaplan-Meier estimator is a non-parametric MLE, since the number of parameters for the whole survival function is in principle infinite, regular theories for tests against MLE may not work.
 
+\medskip
+One simple alternative is to test for equality of survival function at one timepoint or a finite set of timepoints.  For example, we may opt to test if $S_0(1) = S_1(1)$, which may be done by comparing $\hat{S}_0(1)$ and $\hat{S}_1(1)$, using Greenwood's formula to quantify their uncertainties.  However, this approach discards information from other timepoints, and can be of low power if $S_0$ and $S_1$ are similar near $t = 1$ but vastly different at other timepoints (e.g. scenarios (b) and (c) in the following figure).  In the following, we will introduce a test that truly tests the equivalence of the whole survival curve, which is the \textbf{log-rank test}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.7\textwidth]{survival_sections/graphs/survival curve.png}
+\end{figure}
+
+\medskip
+We first define some additional notations.  Let $t_1, t_2, ..., t_q$ still be the ordered timepoints with event occurrence.  Denote $R_{0j}$ and $R_{1j}$ as the number of subjects at risk for group $0$ and group $1$ right before $t_j$, and write $R_j = R_{0j} + R_{1j}$ as the total number of at-risk subjects.  Denote $d_{0j}$ and $d_{1j}$ as the number of events occurring at $t_j$ in group $0$ and group $1$, and write $d_j = d_{0j} + d_{1j}$ as the total number of events.  Then for each timepoint $t_j$, we may construct the following table:
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|cc|c}
+        $t=t_j$ & Event & Non-event & At risk \\
+        \hline
+        Group $0$ & $d_{0j}$ & $R_{0j} - d_{0j}$ & $R_{0j}$\\
+        Group $1$ & $d_{1j}$ & $R_{1j} - d_{1j}$ & $R_{1j}$ \\
+        \hline
+        Total & $d_j$ & $R_j - d_j$ & $R_j$
+    \end{tabular}
+\end{table}
+
+When the marginals $R_{0j}, R_{1j}, d_j, (R_j-d_j)$ treated as fixed, the cells in the table only have one degree of freedom, and let's set our cell of interest to be $d_{1j}$.  Under the null hypothesis of $H_0: S_0(t) = S_1(t)$, which is equivalent to $h_0(t) = h_1(t)$ and roughly means that "the subjects in both groups have the same probability of experiencing events", we can see this table as drawing $d_j$ balls from a pool of $R_{0j}$ "Group $0$ balls" and $R_{1j}$ "Group $1$ balls".  $d_{1j}$ is then the number of drawn "Group $1$ balls".  Therefore, the conditional distribution for $d_{1j}$ is a \textit{hypergeometric distribution} with parameters $N = R_j, K = R_{1j}$ and $n = d_j$.  Consequently, we can define
+\begin{align}
+    O_j &:= d_{1j}\\
+    E_j &:= \E[O_j | R_j, R_{1j}, d_j] \\
+    &= d_j \frac{R_{1j}}{R_j}\\
+    V_j &:= var[O_j | R_j, R_{1j}, d_j] \\
+    &= \frac{R_{1j}(R_j - R_{1j})d_j(R_j-d_j)}{R_j^2(R_j - 1)}
+\end{align}
+Now we can define the log-rank statistic by
+\begin{gather}
+    O := \sum_j O_j, \quad E := \sum_j E_j, \quad V := \sum_j V_j\\
+    Z := \frac{O-E}{\sqrt{V}}
+\end{gather}
+which is approximately normally distributed under the null hypothesis.  
+
+\medskip
+An immediate observation for $Z$ is that when the hazards of group $1$ is always greater than group $0$, then $O$, which is the total number of events that occurred in group $1$, would be greater than expected, leading to a large positive $Z$.  In contrasts, when the hazards of group $1$ is always lesser than group $0$, we would get a negative $Z$ with large magnitude.  However, in the case where the hazards of the two groups are intertwined like scenario (c) in the figure above, $O$ may not be too different than $E$ since $O_j$ is sometimes larger than and sometime smaller than $E_j$.  In fact, the log-rank test can be reformulated as testing if $\theta = 1$ in the hypothesis $h_1(t) = \theta h_0(t)$.  Therefore, it has the best power when the hazards are truly proportional like scenario (a), sub-optimal power when the hazards of one group is still greater than the other across time but not proportional like scenario (b), and has \textbf{low power if the hazard functions of the two groups cross} like scenario (c). 
+
+\medskip
+From the discussion above, we see that the vanilla log-rank test statistic treats each contingency table as equally important, so it may have sub-optimal power when then difference in hazards is greater in some time intervals and lesser in other.  In light of this, based on prior knowledge for when the hazards difference would be greater, we can construct \textbf{weighted log-rank test} statistics as follows
+\begin{equation}
+    Z(\boldsymbol{w}) = \frac{\sum_j w_j(O_j - E_j)}{\sqrt{\sum_j w_j^2V_j}}
+\end{equation}
+where the weight $w_j$ is set to be larger at timepoints that is expected have larger hazards difference.  The null distribution of this statistic is still approximately normal. Some common settings for the weights are as follows:
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{cc}
+        Name & $w_j$ \\
+        Log-rank & $1$\\
+        Wilcoxon & $R_j$\\
+        Tarone-Ware & $\sqrt{R_j}$\\
+        Peto-Prentice & $\hat{S}(t_j)$\\
+        Fleming-Harrington & $[\hat{S}(t_{j-1})]^p[1-\hat{S}(t_{j-1})]^q$
+    \end{tabular}
+\end{table}
+
+where $\hat{S}(t)$ is the Kaplan-Meier estimator for both groups combined.  Notice taht Wilcoxon, Taron-Ware and Peto-Prentice all place larger weights at earlier timepoints, while for Fleming-Harrington we may place larger weights at later timepoints by setting a larger $q$.
+
+\medskip
+Another extension to the log-rank test is to account for between-group difference in characteristics.  For example, suppose we want to know if the treated group has better survival than the untreated group, but we observe that the treated group has younger patients, who naturally have better survival even without the treatment.  In this case, we may split the data into the $L = 2$ strata consisting of young patients ($l = 0$) and old patients ($l = 1$).  For each stratum $l \in \{0, 1\}$ we yield $O^{(l)}, E^{(l)}$ as the observed and expected number of events, and $V^{(l)}$ as the variance for $O^{(l)}$.  We can then construct the \textbf{stratified log-rank test} statistic as
+\begin{equation}
+    Z_{\text{strat}} = \frac{\sum_l (O^{(l)}-E^{(l)})}{\sqrt{\sum_l V^{(l)}}}
+\end{equation}
+Note that now with each strata, all patients are of the same age group, so the difference between $O^{(l)}$ and $E^{(l)}$ cannot stem from difference in age distribution between groups, and can thus be better ascribed to the effect of the treatment.
+
+\medskip
+The last extension to log-rank test we'll talk about is the case where there are more than two groups, say, $G+1$ groups labeled $\{0, 1, 2,...,G\}$.  In this case, the null hypothesis we are testing would be $H_0: S_0(t) = S_1(t) = S_2(t) = ... = S_G(t)$, and the contingency table for timepoint $t_j$ would shape as follows
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|cc|c}
+        $t=t_j$ & Event & Non-event & At risk \\
+        \hline
+        Group $0$ & $d_{0j}$ & $R_{0j} - d_{0j}$ & $R_{0j}$\\
+        Group $1$ & $d_{1j}$ & $R_{1j} - d_{1j}$ & $R_{1j}$\\
+        Group $2$ & $d_{2j}$ & $R_{2j} - d_{2j}$ & $R_{2j}$\\
+        \vdots & \vdots & \vdots & \vdots\\
+        Group $G$ & $d_{Gj}$ & $R_{Gj} - d_{Gj}$ & $R_{Gj}$\\
+        \hline
+        Total & $d_j$ & $R_j - d_j$ & $R_j$
+    \end{tabular}
+\end{table}
+
+Now the degrees of freedom for the cells after fixing the marginals would be $G$, and we may set $d_{1j}, d_{2j}, ..., d_{Gj}$ as the cells of interest, whose condition joint distribution would be a \textit{multivariate hypergeometric distribution} under the null hypothesis.  In light of this, we can define the follows
+\begin{align}
+    O_j &:= (d_{1j}, d_{2j}, ..., d_{Gj})^\top\\
+    E_j &:= \E[O_j|R_j, d_j, R_{1j}, R_{2j}, ..., R_{Gj}]\\
+    &= \frac{d_j}{R_j}(R_{1j}, R_{2j}, ..., R_{Gj})^\top\\
+    V_j &:= var[O_j|R_j, d_j, R_{1j}, R_{2j}, ..., R_{Gj}]
+\end{align}
+where for the detail of the matrix $V_j$:
+\begin{gather}
+    V_{j(kk)} = \frac{R_{kj}(R_j - R_{kj})d_j(R_j-d_j)}{R_j^2(R_j - 1)}\\
+    V_{j(kl)} = -\frac{R_{kj}R_{lj}d_j(R_j-d_j)}{R_j^2(R_j - 1)}
+\end{gather}
+Now we can define the log-rank statistic by
+\begin{gather}
+    O := \sum_j O_j, \quad E := \sum_j E_j, \quad V := \sum_j V_j\\
+    Z := (O-E)^\top V^{-1} (O-E)
+\end{gather}
+which is approximately distributed as $\chi^2_G$ under the null hypothesis.  Note that this test, like ANOVA, tests if the survival function of \textit{any} group deviates from others.  To clarify which group is different from which, we will still need post-hoc tests.
