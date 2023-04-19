@@ -84,3 +84,17 @@ There are two immediate amendments to the partial likelihood above:
     \end{equation}
     We can then construct the partial likelihood for subjects of $X_0 = 0$ and $X_0 = 1$ separately and maximize their product with respect to $\beta$. This approach is called the \textbf{Stratified Cox Proportional Hazards Model}.
 \end{enumerate}
+
+To show Cox proportional hazards regression is carried out in \textit{R}, we use the \texttt{pbc} data again, fitting the same model as we did in parametric survival analysis:
+
+<<>>=
+# Fit a Cox proportional hazards regression
+mod_ph <- coxph(Surv(time, status >= 1) ~ (trt == 1) + age + sex + factor(edema) + 
+                albumin + ascites + ast + bili + protime, data = pbc)
+mod_ph
+
+# Generate confidence intervals for the exponentiated regression coefficients
+exp(confint(mod_ph))
+@
+
+The estimated coefficient is very similar to what we got in Weibull regression, and the explanation of the coefficients are exactly the same.  The difference would be that, suppose we know that Weibull is the correct baseline survival distribution, then using Weibull regression increases power.  However, if in realilty Weibull distribution is actually mis-specified, then Weibull distribution would give biased coefficient estimates, while the Cox proportional hazards regression would give unbiased coefficient estimates as long as the proportional hazards assumption stands.  If we are unsure that if the proportional hazards assumption is valid for any of the categorical covariates, then we can stratify it out using stratified Cox regression with the same syntax as \texttt{survdiff}, but note that then you will not be able to estimate the regression coefficient for that covariate.
