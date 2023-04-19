@@ -281,3 +281,30 @@ Now we can define the log-rank statistic by
     Z := (O-E)^\top V^{-1} (O-E)
 \end{gather}
 which is approximately distributed as $\chi^2_G$ under the null hypothesis.  Note that this test, like ANOVA, tests if the survival function of \textit{any} group deviates from others.  To clarify which group is different from which, we will still need post-hoc tests.
+
+\medskip
+We will show how log-rank tests work using the \texttt{pbc} dataset again.  Suppose we are to test if the survival of male patients (\texttt{sex = 'm'}) are different from female patients (\texttt{sex = 'f'}).  We can first plot the Kaplan-Meier curve of the two groups using the package \texttt{survminer} (Note that we have called the \texttt{pbc} dataset and removed those with \texttt{trt == NA} before):
+
+<<fig.height = 4.5, fig.width = 4.5, fig.align = 'center' >>=
+library(survminer)
+pbc_km <- survfit(Surv(time, status >= 1) ~ sex, data = pbc)
+ggsurvplot(pbc_km)
+@
+
+From the plot, we can see that the survival of male and female patients seems to be different, with females less likely to experience event than males.  To formally show this, we can use the log-rank test:
+<<>>=
+survdiff(Surv(time, status >= 1) ~ sex, data = pbc)
+@
+\noindent which shows that the survival of male patients is indeed significantly worse than female patients.  However, it still may be the case that in this cohort, male patients are older and thus lead to its worse survival, while gender does not actually affect survival directly.  To address this concern, we can stratify the population by age, using the median age as cut-off point:
+<<>>=
+median(pbc$age)
+survdiff(Surv(time, status >= 1) ~ sex + strata(age >= 50), data = pbc)
+@
+\noindent From the stratified log-rank test, after accounting for the influence of age, the survival of male patients is still significantly worse than female patients (which can be inferred by noticing the observed number of events for male patients is more than expected).
+
+\medskip
+For categorical variables with more than two levels, we can use the same syntax to carry out the log-rank test, though behind the scene the test statistic is now constructed using quadratic forms and compared against chi-square distributions.  For example, if we are interested in the survival difference between different \texttt{edema} groups:
+<<>>=
+survdiff(Surv(time, status >= 1) ~ edema, data = pbc)
+@
+\noindent which shows that patients with different \texttt{edema} status do not have the same survival overall.  Looking into the observed and expected number of events, patients with \texttt{edema = 0} seems to be less hazardous than others since they have fewer observed events than expected.  However, to formally test this, we'll need another log-rank test with appropriate multiple comparison correction. 
