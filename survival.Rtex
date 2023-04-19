@@ -47,7 +47,7 @@
 <<child = 'survival_sections/03_censor_formulation.Rtex'>>=
 @
 
-\section{Parametric Inference of Right-Censored Survival Data}
+\section{Parametric Inference for Right-Censored Survival Data}
 <<child = 'survival_sections/04_parametric_inference.Rtex'>>=
 @
 
@@ -55,8 +55,12 @@
 <<child = 'survival_sections/05_regression_methods.Rtex'>>=
 @
 
-\section{Nonparametric Inference of Right-Censored Survival Data}
+\section{Nonparametric Inference for Right-Censored Survival Data}
 <<child = 'survival_sections/06_nonparametric_inference.Rtex'>>=
+@
+
+\section{Semiparametric Inference for Survival Data}
+<<child = 'survival_sections/07_cox_regression.Rtex'>>=
 @
 
 \end{document}

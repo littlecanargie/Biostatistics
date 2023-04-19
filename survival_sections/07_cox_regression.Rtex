@@ -1,0 +1,86 @@
+In the previous section, we showed how we can estimate the survival function non-parametrically using the Kaplan-Meier estimator, and test for their difference using the log-rank test.  However, in the case where our covariate of interest is continous or has too many levels, e.g. we want to know if weight influences survival, it would be unreasonable and inefficient to fit a Kaplan-Meier curve for each possible value of weight and perform a log-rank test on this enormous amount of survival curves.  Therefore, we would need a model to help us reduce the dimension of covariate patterns.  To preseve flexibility, ideally we would want to put the model only on the part where covariates influences the survival (hazard) function, but still keep the general shape of the survival (hazard) function non-parametric.
+
+\medskip
+Previous we introduced two types of models that may be useful: proportional hazards (PH) model and accelerated failure time (AFT) model.  Both of these models have a "baseline" part that governs the shape of the survival (hazard) function under a reference covariate value, and a "covariate" part that determines how covariates come into play.  At first glance, it would be easy to just relax the "baseline" part of these model to be estimated non-parametrically, and everything would work out as before.  Unfortunately, the asymptotic results from the previous sections would only be valid if the number of parameter is fixed and finite, while for our approach the "baseline" part would have infinite number of parameters which breaks the requirement.  Therefore, we need to find a clever way to circumvent estimating the "baseline" part directly, while still getting consistent estimates for the parameters in the "covariate" part.
+
+\medskip
+This is where \textit{D. R. Cox} comes in, who was a giant in statistical theories across several fields of statistics.  The idea of Cox is that, suppose the likelihood implied by a PH model can be parameterized as $L(h_0, \beta)$, where $h_0$ is the "baseline" hazard function and $\beta$ is the vector of parameters governing the "covariate" part, i.e. $g(X)$ in our previous notation.  Directly maximizing $L$ would not work since $h_0$ is now infinite-dimensional.  However, if we could factor $L$ as follows:
+\begin{equation}
+    L(h_0, \beta) = L_0(h_0, \beta) L_1(\beta)
+\end{equation}
+where $L_0(h_0, \beta)$ is a function that carries relatively little information about $\beta$, and $L_1(\beta)$ is a function that when maximized, produces consistent estimates for $\beta$.  Then, at the cost of a small loss of efficiency, we may maximize $L_1(\beta)$ only and obtain valid asymptotic confidence intervals by treating $L_1(\beta)$ as a true likelihood function with finite number of parameters.  Note that $L_1(\beta)$ is in fact not the full likelihood function, so it is often termed as a \textbf{partial likelihood function}.
+
+\medskip
+To construct $L_1$, suppose as before, we let $t_1, t_2..., t_q$ be the ordered timepoints with event occurrence, and by convention define $t_0 = 0$ and $t_{p+1} = \infty$.  If we denote $\mathcal{F}_t$ as the set of things occurred at and before $t$ (so that $\mathcal{F}_0$ is empty), the likelihood can be written as, with lenient notations
+\begin{equation}
+    L(h_0, \beta) = \P(\mathcal{F}_{t_p+1}|\mathcal{F}_{t_p})\Big(\prod_{j=1}^{p} \P(\mathcal{F}_{t_j}|\mathcal{F}_{t_j^-})\P(\mathcal{F}_{t_j^-}|\mathcal{F}_{t_{j-1}})\Big) \label{eq: cox_decomp_1}
+\end{equation}
+Here $\mathcal{F}_{t_j^-}$ includes the information of all participants that have experienced event or censored before $t_j$.  Therefore, given $\mathcal{F}_{t_j^-}$, we know which subjects are in the risk set for $t_j$, so the added information in $\mathcal{F}_{t_j}$ is the number and ID of participants that experienced event at $t_j$. (Technically, for participants censoring at $t_j$, we can treat them as censoring at $t_j^+$ and throw their information to $(\mathcal{F}_{t_{j+1}^-}|\mathcal{F}_{t_j})$).  Now we can further decompose $\P(\mathcal{F}_{t_j}|\mathcal{F}_{t_j^-})$ into the two pieces of information: number of events $d_j$ and the set of ID for participants experiencing events $\mathcal{I}_j$.
+\begin{equation}
+    \P(\mathcal{F}_{t_j}|\mathcal{F}_{t_j^-}) = \P(\mathcal{I}_j \cup d_j \cup \mathcal{F}_{t_j^-}|\mathcal{F}_{t_j^-}) = \P(\mathcal{I}_j|d_j, \mathcal{F}_{t_j^-})\P(d_j|\mathcal{F}_{t_j^-}) \label{eq: cox_decomp_2}
+\end{equation}
+Now notice that under the PH model, $\P(\mathcal{I}_j|d_j, \mathcal{F}_{t_j^-})$ \textit{does not} depend on $h_0$.  To see this, let's assume that $d_j = 1$ so that among the $R_j$ subjects within the risk set at $t_j$, only one experienced event at $t_j$.  Suppose the covariate values of these subjects are
+\begin{equation}
+    X_{j1}, X_{j2}, ..., X_{jR_j}
+\end{equation}
+then the hazards of these subjects at $t_j$, implied by the PH model $h(t) = h_0(t)g(X)$, are
+\begin{equation}
+    h_0(t_j)g(X_{j1}), h_0(t_j)g(X_{j2}), ..., h_0(t_j)g(X_{jR_j})
+\end{equation}
+Therefore, the probability that subject $l$ is the one that experienced the event is
+\begin{equation}
+    \frac{h_0(t_j)g(X_{jl})}{h_0(t_j)g(X_{j1}) + h_0(t_j)g(X_{j2}) + ... + h_0(t_j)g(X_{jR_j})} = \frac{h_0(t_j)g(X_{jl})}{\sum_{k=1}^{R_j}h_0(t_j)g(X_{jk})} = \frac{g(X_{jl})}{\sum_{k=1}^{R_j} g(X_{jk})} \label{eq: cox_cond}
+\end{equation}
+which indeed does not depend on $h_0$.  Therefore, combining \Cref{eq: cox_decomp_1,eq: cox_decomp_2}, we have
+\begin{equation}
+    L(h_0, \beta) = \underbrace{\P(\mathcal{F}_{t_p+1}|\mathcal{F}_{t_p})\Big(\prod_{j=1}^{p} \P(d_j|\mathcal{F}_{t_j^-})\P(\mathcal{F}_{t_j^-}|\mathcal{F}_{t_{j-1}})\Big)}_{L_0(h_0, \beta)} \underbrace{\Big(\prod_{j=1}^{p} \P(\mathcal{I}_j|d_j, \mathcal{F}_{t_j^-})\Big)}_{L_1(\beta)} \label{eq: cox_decomp}
+\end{equation}
+so we can maximize the partial likelihood $L_1(\beta)$ to infer about $\beta$ using conventional likelihood theories.  For example, suppose we have the following observations:
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{cccc}
+        ID & $Y$ & $\Delta$ & $X$\\
+        \hline
+        $1$ & $2$ & $1$ & $0$\\
+        $2$ & $3$ & $0$ & $1$\\
+        $3$ & $5$ & $1$ & $2$\\
+        $4$ & $8$ & $1$ & $0$\\
+    \end{tabular}
+\end{table}
+
+\noindent and the PH model is set as $h(t) = h_0(t)g(X) = h_0(t)\exp(X\beta)$.  The we have
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{cccc}
+        $j$ & $t_j$ & IDs in risk set & $\mathcal{I}_j$\\
+        \hline
+        $1$ & $2$ & $\{1,2,3,4\}$ & $\{1\}$\\
+        $2$ & $5$ & $\{3,4\}$ & $\{3\}$\\
+        $3$ & $8$ & $\{4\}$ & $\{4\}$\\
+    \end{tabular}
+\end{table}
+
+\noindent so the partial likelihood is
+
+\begin{equation}
+    L_1(\beta) = \frac{e^0}{e^0 + e^\beta + e^{2\beta} + e^0} \cdot \frac{e^{2\beta}}{e^{2\beta} + e^0}\cdot \frac{e^0}{e^0}
+\end{equation}
+
+\noindent which upon maximization yields \texttt{$\hat{\beta}$ = 0.1472}.  The explanation for the value of $\hat{\beta}$ is the same as before when we talked about proportional hazards regression: $\hat{\beta}$ is the \textit{log hazard ratio} when the value of $X$ is incremented by $1$ unit, holding other covariates as constant (which in this case we do no have any). This approach, which Cox first proposed, is called the \textbf{Cox Proportional Hazards Regression}, which is also commonly referred to as semi-parametric regression since the "covariate" part of the model is parametric but the "baseline" part of the model is not estimated, or later estimated non-parametrically after obtaining the parameter estimates for the "covariate" part.
+
+\medskip
+There are two immediate amendments to the partial likelihood above:
+\begin{enumerate}
+    \item In the deriavation of the conditional probability in \Cref{eq: cox_cond}, we assume that $d_j = 1$, i.e. there is only one event occurring at $t_j$.  In the case where $d_j > 1$, especially when $d_j$ is large, the partial likelihood would quickly become intractable.  Therefore, there are two common approximations that approximates the partial likelihood under tied event times: \textit{Breslow} and \textit{Efron}.  Empirically, Efron provides a better approximation, but Breslow has faster computation times.
+    \item In the case where we are unwilling to make the PH assumption for some discrete covariate (say, $X_0$ taking values $0$ and $1$), but are also not interested in the effect size of this covariate, we may rewrite the PH model as
+    \begin{equation}
+        h(t) = 
+        \begin{cases}
+            h_0(t)\exp(X\beta), & X_0 = 0\\
+            h_1(t)\exp(X\beta), & X_0 = 1
+        \end{cases}
+    \end{equation}
+    We can then construct the partial likelihood for subjects of $X_0 = 0$ and $X_0 = 1$ separately and maximize their product with respect to $\beta$. This approach is called the \textbf{Stratified Cox Proportional Hazards Model}.
+\end{enumerate}
