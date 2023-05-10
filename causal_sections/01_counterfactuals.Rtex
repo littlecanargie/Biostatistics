@@ -1,1 +1,81 @@
-In statistical modelling, we are often told that "\textit{Correlation is not causation}"
+We start from the concept of counterfactuals.  Suppose that like in the textbook, a patient $i$ waiting for heart transplant received a new heart, and then died a year later.  Suppose we denote the indicator random variable for "death within one year" as $Y$, the the indicator random variable for receiving a heart transplant as $A$.  For now, we assume that the outcome is deterministic.  Then for patient $i$, we have 
+\[Y_i = 1,  \quad A_i = 1\]
+However, from this information alone we do not know if and how the surgery affected patient $i$'s survival.  Whether the causal effect exists depends on which of the following is true:
+\begin{enumerate}[label = \alph*)]
+    \item If patient $i$ would have died anyway, with or without the surgery, then the surgery did not affect their survival.
+    \item If patient $i$ would have lived if they did not receive the surgery, then the surgery seems to have caused their death. 
+\end{enumerate}  
+Therefore, before we could say any about the causal effect of the surgery on patient $i$'s survival, we will need to know their survival \textit{had they not received a heart transplant}.
+
+\medskip
+To cater to this query, we define a vector of random variables $(Y^{a=0}, Y^{a=1})^\top$, or shorthanded as $(Y^0, Y^1)^\top$, that stands for the \textit{counterfactual} outcomes had the patient received different treatment decisions: $Y^0$ is their survival had they \textit{not} received the surgery, and $Y^1$ is their survival had they received the surgery.  For patient $i$, we have already known that receiving the surgery results in death within one year, so we should have $Y_i^1 = 1$.  This intuition is formalized as the \textbf{consistency assumption}:
+
+\begin{assumption}[Consistency]
+$Y = Y^A$. \label{asmp: consistency}
+\end{assumption}
+
+In our query for the causal effect of the surgery on patient $i$, for scenario a) above, we have $Y_i^0 = 1$, so that $Y_i^0 = Y_i^1 = 1$ and there is no \textit{individual causal effect} on patients $i$.  For scenario b) above, we have $Y_i^0 = 0$, so that $Y_i^0 \ne Y_i^1$ and the surgery has \textit{individual causal effect} on patient $i$.  This leads to the formal definition
+\begin{definition}[Individual causal effect]
+    Treatment $A$ has a causal effect on individual $i$ if and only if $Y_i^1 \ne Y_i^0$.
+\end{definition}
+
+In reality, we cannot observe $Y_i^0$ because patient $i$ actually received the surgery, rendering it \textit{counterfactual} and thus the name for $(Y^0, Y^1)^\top$.  Since we usually cannot identify the individual causal effect, we turn to the population causal effect, which compares the distribution of $Y^1$ and $Y^0$ within a certain population.  In particular, we are often interested in whether the \textit{mean} of $Y^1$ and $Y^0$ are different.  The mean of $Y^1$ is the average outcome of the population of interest if everyone received the surgery, and the mean of $Y^0$ is the average outcome when no-one received the surgery.  Therefore, when the two means are different, it implies that on average, the treatment has a causal effect on the outcome, vice versa.  In other words, the \textit{null hypothesis of no average causal effect} would be 
+\begin{equation}
+    \E[Y^1] = \E[Y^0]
+\end{equation}
+where the expectation is taken over our population of interest.  For example, suppose our population is finite with $Y_i^0$ and $Y_i^1$ as the following left panel:
+
+\noindent\begin{minipage}[t]{0.3\textwidth}
+    \phantom{.}
+
+    \bigskip \medskip
+    
+    \begin{center}
+        \begin{tabular}{ccc}
+            ID & $Y^0$ & $Y^1$ \\
+            \hline
+            1 & 0 & 1 \\2 & 1 & 0 \\3 & 0 & 0 \\4 & 0 & 0 \\
+            5 & 0 & 0 \\6 & 1 & 0 \\7 & 0 & 0 \\8 & 0 & 1 \\
+            9 & 1 & 1 \\10 & 1 & 0 \\11 & 0 & 1 \\12 & 1 & 1\\
+            13 & 1 & 1 \\14 & 0 & 1 \\15 & 0 & 1 \\16 & 0 & 1 \\
+            17 & 1 & 1 \\18 & 1 & 0 \\19 & 1 & 0 \\20 & 1 & 0 \\   
+        \end{tabular}
+    \end{center}
+\end{minipage}
+\begin{minipage}[t]{0.7\textwidth}
+    \phantom{.}
+    
+    Then we have $\E[Y^0] = \E[Y^1] = 0.5$, so there is no average causal effect.  However, notice that even if there is no average causal effect, the treatment still has causal effect on certain individuals, eg. patients with ID $1$ and $2$.  No individual causal effect for all individuals implies no average causal effect, but the reverse does not hold.
+
+    \medskip
+    The null hypothesis of average causal effect cares about the equivalence of $\E[Y^1]$ and $\E[Y^0]$, so we can define the measure of causal effect by some functions of $\E[Y^1]$ and $\E[Y^0]$ that takes on a specific value when $\E[Y^1] = \E[Y^0]$ and other values otherwise.  The most commonly used measure of causal effect in causal inference is the mean difference:
+    \begin{equation}
+        \tau = \E[Y^1] - \E[Y^0]
+    \end{equation}
+    When $Y^1$ and $Y^0$ are binary, we have
+    \begin{equation}
+        \tau_{\text{RD}} = \E[Y^1] - \E[Y^0] = \P[Y^1 = 1] - \P[Y^0 = 0]
+    \end{equation}
+    which translates to the \textit{risk difference} between the two treatment decisions.  Here $\tau_{\text{RD}} = 0$ implies no average causal effect.  Alternatively, we can define the following measures of causal effect for binary outcomes
+    \begin{gather}
+        \tau_{\text{RR}} = \frac{\P[Y^1 = 1]}{\P[Y^0 = 1]} \label{eq: RR}\\
+        \tau_{\text{OR}} = \frac{\P[Y^1 = 1] / \P[Y^1 = 0]}{\P[Y^0 = 1] / \P[Y^0 = 0]} \label{eq: OR}
+    \end{gather}
+\end{minipage}
+
+\medskip
+\noindent\Cref{eq: RR} defines the causal effect as the ratio of outcome risks between the two treatment decisions, and is termed as \textit{risk ratio} or \textit{relative risk} by epidemiologists.  The value of risk ratio under the null hypothesis of no causal effect is $1$.  \Cref{eq: OR} defines the causal effect as the ratio of outcome odds between the two treatment decisions, and is termed as \textit{odds ratio} by epidemiologists.  The value of odds ratio under the null hypothesis of no causal effect is also $1$.
+
+\medskip
+In the previous example, we assume that our population of interest is finite and only consists of $20$ patients.  Therefore, if we can gather their counterfactual outcomes, we can calculate the exact measures of causal effect such and risk difference or risk ratio.  However, in reality, the population of interest (eg. all heart failure patients in Taiwan) is not observable, and we can only obtain a sample of the population.  Therefore, we would have to estimate $\E[Y^1]$ and $\E[Y^0]$ using the sample, and the most intuitive way is to use the \textit{empirical mean} defined as 
+\begin{align}
+    \E_n[Y^1] = \frac{1}{n}\sum_{i=1}^n Y_i^1\\
+    \E_n[Y^0] = \frac{1}{n}\sum_{i=1}^n Y_i^0
+\end{align}
+where $n$ is the sample size.  As long as the individuals are mutually independent and $Y^1$, $Y^0$ have finite variance, the empirical means are \textit{consistent} estimators for $\E[Y^1]$ and $\E[Y^0]$, so we can estimate the risk difference, risk ratio and odds ratio as:
+\begin{align}
+    \hat{\tau}_{\text{RD}} &= \P_n[Y^1 = 1] - \P_n[Y^0 = 1]\\
+    \hat{\tau}_{\text{RR}} &= \frac{\P_n[Y^1 = 1]}{\P_n[Y^0 = 1]}\\
+    \hat{\tau}_{\text{OR}} &= \frac{\P_n[Y^1 = 1] / \P_n[Y^1 = 0]}{\P_n[Y^0 = 1] / \P_n[Y^0 = 0]}
+\end{align}
+where $\P_n[W = 1] := \E_n[W]$ and $\P_n[W = 0] := \E_n[1 - W]$ are the empirical proportions for $W=1$ and $W=0$ given that $W$ is binary.  These estimators would also be consistent for their corresponding effect measures $\tau_{\text{RD}}$, $\tau_{\text{RD}}$ and $\tau_{\text{RD}}$.

@@ -1,0 +1,99 @@
+\noindent\begin{minipage}[t]{0.4\textwidth}
+    \phantom{.}
+
+    \bigskip \bigskip
+    
+    \begin{center}
+        \begin{tabular}{ccccc}
+            ID & $A$ & $Y$ & $Y^0$ & $Y^1$ \\
+            \hline
+            1 & 0 & 0 & 0 & \textcolor{lightgray}{1} \\
+            2 & 0 & 1 & 1 & \textcolor{lightgray}{0} \\
+            3 & 0 & 0 & 0 & \textcolor{lightgray}{0} \\
+            4 & 0 & 0 & 0 & \textcolor{lightgray}{0} \\
+            5 & 1 & 0 & \textcolor{lightgray}{0} & 0 \\
+            6 & 1 & 0 & \textcolor{lightgray}{1} & 0 \\
+            7 & 1 & 0 & \textcolor{lightgray}{0} & 0 \\
+            8 & 1 & 1 & \textcolor{lightgray}{0} & 1 \\
+            9 & 0 & 1 & 1 & \textcolor{lightgray}{1} \\
+            10 & 0 & 1 & 1 & \textcolor{lightgray}{0} \\
+            11 & 0 & 0 & 0 & \textcolor{lightgray}{1} \\
+            12 & 1 & 1 & \textcolor{lightgray}{1} & 1 \\
+            13 & 1 & 1 & \textcolor{lightgray}{1} & 1 \\
+            14 & 1 & 1 & \textcolor{lightgray}{0} & 1 \\
+            15 & 1 & 1 & \textcolor{lightgray}{0} & 1 \\
+            16 & 1 & 1 & \textcolor{lightgray}{0} & 1 \\
+            17 & 1 & 1 & \textcolor{lightgray}{1} & 1 \\
+            18 & 1 & 0 & \textcolor{lightgray}{1} & 0 \\
+            19 & 1 & 0 & \textcolor{lightgray}{1} & 0 \\
+            20 & 1 & 0 & \textcolor{lightgray}{1} & 0 \\   
+        \end{tabular}
+    \end{center}
+\end{minipage}
+\begin{minipage}[t]{0.6\textwidth}
+    \phantom{.}
+    
+    Previously we showed how to use the empirical mean of counterfactual outcomes to estimate the average causal effect under selected effect measures.  However, in reality we only observe one of $Y^0$ and $Y^1$ for each individual, as shown in the left panel.  When subject $i$ did not receive the surgery, we observe $Y_i = Y_i^0$ from the consistency assumption, and $Y_i^1$ is unknown, or in a sense missing (shown in gray).   When subject $i$ did receive the surgery, we observe $Y_i = Y_i^1$, and $Y_i^0$ is missing.  In this case, the best we can do to estimate $\E[Y^1]$ is to compute the empirical mean of observable $Y^1$, which is the $Y$ for those $A = 1$.  The same is done for $\E[Y^0]$.  Therefore, we are using the following estimators for $\E[Y^1]$ and $\E[Y^0]$:
+    \begin{align}
+        \hat{\E}[Y^1] &= \E_n[Y|A = 1]\\
+        \hat{\E}[Y^0] &= \E_n[Y|A = 0]
+    \end{align}
+    Then under binary $Y$, the risk difference, risk ratio and odds ratio estimators would be
+    \begin{align}
+        \hat{\tau}_{\text{RD}} &= \P_n[Y=1|A=1] - \P_n[Y=1|A=0] \label{eq: emp_RD}\\
+        \hat{\tau}_{\text{RR}} &= \frac{\P_n[Y=1|A=1]}{\P_n[Y=1|A=0]}\\
+        \hat{\tau}_{\text{OR}} &= \frac{\P_n[Y=1|A=1] / \P_n[Y=0|A=1]}{\P_n[Y=1|A=0] / \P_n[Y=0|A=0]}
+    \end{align}
+\end{minipage}
+
+\bigskip
+\noindent To derive the necessary assumptions for these estimator to be consistent, let us ignore the counterfactuals for a bit and look at the causal effect estimator for risk difference in \Cref{eq: emp_RD}.  Since $\P_n$ is an empirical mean, $\hat{\tau}_{\text{RD}}$ is consistent for the association measure
+\begin{equation}
+    \theta_{\text{RD}} = \P[Y=1 | A=1] - \P[Y=1 | A=0]
+\end{equation}
+We say that $\theta$ is an association measure because it measures the strength of association between $Y$ and $A$.  In addition, when $\theta_{\text{RD}} = 0$, $Y$ and $A$ are independent, or $Y \indep A$.  To see this, we have, with binary $Y$ and $A$,
+\begin{align}
+    &\phantom{\Leftrightarrow} \qquad 
+    \;\; Y \indep A&&\\
+    &\Leftrightarrow \qquad \P[Y = y | A = a] = \P[Y = y] \qquad \forall y,a \in \{0,1\}&&\\
+    &\Leftrightarrow \qquad \P[Y = y | A = 1] = \P[Y = y | A = 0] \qquad \forall y \in \{0,1\}&&\\
+    &\Leftrightarrow \qquad \P[Y = 1 | A = 1] = \P[Y = 1 | A = 0]&&\\
+    &\Leftrightarrow \qquad \P[Y = 1 | A = 1] - \P[Y = 1 | A = 0] = 0&&
+\end{align}
+
+\noindent Therefore, $\hat{\tau}_{\text{RD}}$ is estimating the association between $A$ and $Y$, represented by $\P[Y=1|A=1] - \P[Y=1|A=0]$.  However, what we actually want is to estimate the average causal effect of $A$ on $Y$, i.e. $\tau_{\text{RD}} = \P[Y^1 = 1] - \P[Y^0 = 1]$.  A sufficient condition that makes these two quantities equivalent is the \textit{exchangeablity} assumption:
+\begin{assumption}[Exchangeablity]
+    $Y^a \indep A, \forall a \in \{0, 1\}$. \label{asmp: exchangeability}
+\end{assumption}
+\noindent To see this, under the consistency and exchangeablity assumptions, for all $a \in \{0, 1\}$:
+\begin{align}
+    \P[Y = 1 | A = a] &= \P[Y^a = 1 | A = a] &\text{(Consistency)}\\
+    &= \P[Y^a = 1] &\text{(Exchangeablity)}
+\end{align}
+Therefore we have, 
+\begin{equation}
+    \tau_{\text{RD}} = \P[Y^1 = 1] - \P[Y^0 = 1] = \P[Y = 1 | A = 1] - \P[Y = 1| A = 0]\label{eq: identify}
+\end{equation}
+Note the in \Cref{eq: identify}, the left hand side is a counterfactual quantity that represents the causal effect of $A$, which we term as the \textit{causal estimand}.  The causal estimand is not readily estimable since $Y^a$ is partially missing.  The right hand side is a quantity estimable by data that represents the association between $A$ and $Y$, which we term as the \textit{statistical estimand}.  \Cref{asmp: consistency,asmp: exchangeability} are the assumptions that ties these two estimands together so that the causal effect is estimable from data, i.e. \textit{identifiable}.  Therefore, \Cref{asmp: consistency,asmp: exchangeability} are often called the \textit{identifiability assumptions}.  The recipe for estimating the statistical estimand, $\P_n[Y=1|A=1] - \P_n[Y=1|A=0]$ is called the \textit{estimator}, and the number produced by the estimator using data is called the \textit{estimate} of causal effect (under the selected measure of causal effect).  In the data above, the causal effect estimate using risk difference as effect measure would be 
+\begin{equation}
+    \hat{\tau}_{\text{RD}} = \P_n[Y=1|A=1] - \P_n[Y=1|A=0] = \frac{7}{13} - \frac{3}{7} = \frac{10}{91}
+\end{equation}
+which should be tested against $0$ taking the variation of the estimator into account.  In summary, the roadmap of the causal inference framework is as follows:
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.8\textwidth]{causal_sections/graphs/roadmap.png}
+\end{figure}
+
+\medskip
+Now let us dig deeper into \Cref{asmp: exchangeability}, the exchangeability assumption:
+\begin{equation}
+    Y^a \indep A, \quad \forall a \in \{0, 1\}
+\end{equation}
+which states that the assignment of the treatment $A$ does not depend on the counterfactual outcomes of the patients.  A scenario where this assumption holds is simple randomization in randomized experiments, where each patient is randomized to heart transplant with probability $p$ and no heart transplant with probability $1-p$, irrelevant of their baseline characteristics.  In this case, we have for any $a \in \{0, 1\}$
+\begin{equation}
+    \P[A = 1 | Y^a] = \P[A = 1] = p
+\end{equation}
+since the treatment assignment is by design simply flipping a (biased) coin, and should be indepedent of $Y^a$.  Given that $A$ is binary, this condition is equivalent to $Y^a \indep A$, and thus the exchangeability assumption is satisfied.  Since in this exchangeability assumption, $A$ and $Y^a$ is independent over the whole population, we also call it the \textit{marginal exchangeability assumption}.  Later we will see that we can relax this assumption into \textit{conditional} exchangeability, at the cost of slightly more complicated statistical estimand. 
+
+\medskip
+Violation of the marginal exchangeability assumption is common in biomedical or epidemiological studies, since the treatment is often non-randomized.  In the case of heart transplants, physicians and policy makers will tend to assign donated hearts to those who are expected to have better prognosis and less complication after receiving the heart transplant, eg. younger patients and patients without too much underlying diseases.  In this case, $\P[Y^1 = 1 | A = 1]$ is expected to be smaller than $\P[Y^1 = 1 | A = 0]$, which implies that $Y^1$ is not independent to $A$, thus violating the marginal exchangeability assumption.  From an estimand construction standpoint, originally we would want to replace the causal estimand $\E[Y^1]$ by $\E[Y|A=1]$.  However, under this treatment assignment regime, the actual average death rate when every patient is sent for surgery ($\E[Y^1]$) would be higher than that observed in the data ($\E[Y|A=1]$), therefore the replacement is not valid.  In later sections, we will see how we can adjust for this violation of marginal exchangeablity by assuming the weaker conditional exchangeability. 

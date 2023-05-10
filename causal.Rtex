@@ -19,13 +19,20 @@
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{cleveref}
 \usepackage{booktabs}
+\usepackage{enumitem}
 \newcommand{\E}{\mathbb{E}}
 \renewcommand{\P}{\mathbb{P}}
 \newcommand{\bX}{\boldsymbol{X}}
 \newcommand{\bY}{\boldsymbol{Y}}
 \newcommand{\T}[1]{#1^\top}
+\newcommand{\indep}{\perp \!\!\! \perp}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+
+\newtheorem{assumption}{Assumption}
+\Crefname{assumption}{Assumption}{Assumptions}
+\newtheorem{definition}{Definition}
+\Crefname{definition}{Definition}{Definitions}
 
 \title{Biostatistics Lecture Notes \\\vspace{3mm} \large Causal Inference}
 \author{Ming-Chieh Shih}
@@ -33,8 +40,17 @@
 \begin{document}
 \maketitle
 
-\section{Starting from Linear Models}
+In statistical modelling, we are often told that "\textit{Correlation does not imply causation}", and are given examples like the association between the crowing of roosters and sunrise, or the association between ice cream sales and rate of drowning.  Some will stop here and just state that we have to treat associations "carefully", and some will come up with a set of common rules to detect non-causal associations (eg. look for temporality to avoid reverse causation, or look for common cause that leading to confounding).  These rules are not wrong, but they do not tackle the \textit{correlation does not imply causation} dilemma in a systematic way.  That is, we need to know \textit{what set of assumptions we need to make} before we can tie correlation between treatment $A$ and outcome $B$ to the actual causal effect of treatment $A$ on $B$.  Here, the treatment $A$ we are referring to is not limit to medical treatments, and can be any characteristic or action we ("or God") can manipulate, e.g. promotion of health policies, alternating sales strategies, changing dieting habits, etc. 
+
+\medskip
+The aim of "\textit{causal inference}" is to study the mathematical formulation, assumption requirement, and estimation strategies for causal effects.  In this course, we will follow the content of the book \textit{Causal Inference: What If} by Miguel Hernán and James Robins (available \href{https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/}{here}) and go through some of the basic tools for modern causal inference.
+
+\section{Counterfactuals and Causal Effects}
 <<child = 'causal_sections/01_counterfactuals.Rtex'>>=
+@
+
+\section{Causation, Association and Marginial Exchangeability}
+<<child = 'causal_sections/02_causation_association.Rtex'>>=
 @
 
 \end{document}
