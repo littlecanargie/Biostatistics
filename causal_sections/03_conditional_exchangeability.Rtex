@@ -1,0 +1,131 @@
+In the previous section, we assumed that the treatments were randomized between the two treatments of our interest, so that we have marginal exchangeability of counterfactual outcomes between the two treatment groups.  However, often times, especially in observational studies, the assignment of treatments are determined by decision makers, eg. physicians and policy enforcers, and their choice among the treatments are usually guided by some other covariates.  For example, for physicians, the frailty and prognosis of the patients may play an important role in the treatment they are going to receive.  Therefore, for most types of data, we need a way to relax the requirement of marginal exchangeability to be still able to estimate the average treatment effects (ATEs). 
+
+\noindent\begin{minipage}[t]{0.3\textwidth}
+    \phantom{.}
+    
+    \begin{center}
+        \begin{tabular}{ccccc}
+            ID & $L$ & $A$ & $Y$\\
+            \hline
+            1 & 0 & 0 & 0\\
+            2 & 0 & 0 & 1\\
+            3 & 0 & 0 & 0\\
+            4 & 0 & 0 & 0\\
+            5 & 0 & 1 & 0\\
+            6 & 0 & 1 & 0\\
+            7 & 0 & 1 & 0\\
+            8 & 0 & 1 & 1\\
+            9 & 1 & 0 & 1\\
+            10 & 1 & 0 & 1\\
+            11 & 1 & 0 & 0\\
+            12 & 1 & 1 & 1\\
+            13 & 1 & 1 & 1\\
+            14 & 1 & 1 & 1\\
+            15 & 1 & 1 & 1\\
+            16 & 1 & 1 & 1\\
+            17 & 1 & 1 & 1\\
+            18 & 1 & 1 & 0\\
+            19 & 1 & 1 & 0\\
+            20 & 1 & 1 & 0
+        \end{tabular}
+    \end{center}
+\end{minipage}
+\begin{minipage}[t]{0.6\textwidth}
+    \phantom{.}
+
+    \bigskip \bigskip \bigskip
+    
+    The idea for relaxing marginal exchangeability comes from the analysis of \textit{conditionally randomized experiments}.  In conditionally randomized experiments, the participants are first grouped by their characteristics, eg. sex as male or female.  Then, for each group of patients, we randomize them to either treatment with predefined probabilities, but the these probabilities can be different between groups.  For example, in the table on the left, suppose $L$ represents the priority on the list for transplantation, taking value $1$ for high-priority and $0$ for low-priority.  Then the probability for low-priorities receiving transplant (i.e. treatment $1$) is $\frac{4}{8} = 0.5$, while the probability for high-priorities receiving transplant is $\frac{9}{12} = 0.75$.  However, within the high- and low-priority groups, the treatments are still randomized, i.e. their treatments decided by a flip of biased coin with probability of being $1$ as $0.5$ for low-priorities and $0.75$ for high-priorities.  In this case, we say that \textbf{conditional exchangeability} holds, which is defined as follows.
+\end{minipage}
+
+\begin{assumption}[Conditional exchangeability]
+    $Y^a \indep A | L, \; \forall a \in \{0, 1\}$
+\end{assumption}
+
+Note that under conditional exchangeability (and consistency), we still cannot estimate the ATE using mean difference between the two treatments, since the average counterfactual outcome for treatment $a$ can be written as
+\begin{align}
+    \E[Y^a] &= \sum_l \E[Y^a | L = l] \P[L = l] \label{eq: real_ate_1}&\\
+    &= \sum_l \E[Y^a | A = a, L = l] \P[L = l] & \text{(Conditional exchangeability)} \label{eq: real_ate_2}\\
+    &=  \sum_l \E[Y | A = a, L = l] \P[L = l] & \text{(Consistency)} \label{eq: real_ate}
+\end{align}
+where in the summation $l$ goes though all possible values for $L$.  However, the mean outcome for participants receiving treatment $a$ is
+\begin{equation}
+    \E[Y |A = a] = \sum_l \E[Y|A=a, L=l] \P[L=l|A=a] \label{eq: emp_ate}
+\end{equation}
+Therefore, when $\P[L=l] \ne \P[L=l|A=a]$, which is the case when the randomization probability is different across groups, \Cref{eq: real_ate} and \Cref{eq: emp_ate} are usually not equivalent (An exception is when $\E[Y^a] \indep L$, i.e. $L$ does not have any effect on the prognosis).  This is reasonable intuitively, since with conditional randomization with respect to priorities, the two treatment groups will then have different high-low priority proportions, and their mean outcome would thus be non-comparable.
+
+\medskip
+Although we cannot estimate the ATE directly under only conditional exchangeability, we \textit{can} estimate the \textbf{conditional average treatment effect} (CATE) with simple averages.  The CATE (using mean outcome difference / risk difference as measure) is defined as $\tau(L) = \E[Y^1 - Y^0 | L]$, i.e. the ATE \textit{within} all patients with characteristic $L$.  Under conditional exchangeability and consistency, from \Cref{eq: real_ate_1,eq: real_ate_2,eq: real_ate}, we have
+\begin{equation}
+    \E[Y^a|L] = \E[Y|A=a, L]
+\end{equation}
+Therefore, we can consistently estimate $\tau(L)$ with the mean outcome difference between the two treatment groups within the subpopulation with covariate value $L$, i.e. $\E[Y | A = 1, L = 0] - \E[Y | A = 0, L = 0]$.  This is also intuitively correct, since within each level (or stratum) of $L$, we are still essentially doing a marginally randomized experiment, so calculating the mean difference of the two treatment groups would reflect the CATE within that stratum of $L$.  This action of computing the stratum-specific treatment effects is terms as \textbf{stratification}.  If we find that the CATE varies among strata, we say that the effect of the treatment is \textit{modified} by $L$, or there is \textbf{effect modification} by $L$.  For example, in the data above, we can estimate the CATE among low-priorities by
+\begin{equation}
+    \E[Y| A=1, L=0] - \E[Y| A=0, L=0] = 1/4 - 1/4 = 0
+\end{equation}
+and the CATE among high-priorities can be estimated by 
+\begin{equation}
+    \E[Y| A=1, L=1] - \E[Y| A=0, L=1] = 6/9 - 2/3 = 0
+\end{equation}
+Therefore, the estimated CATE is identical between the two priority groups, and there is no evidence of effect modification by priority score.
+
+\medskip
+We are now able to estimate the CATE for every stratum, but usually we are more interested in the ATE, since (1) in future application scenarios, we may not have access to the strata information for each patient (2) when the number of strata is large, which is especially true when there are large amounts of covariates, each individual CATE will be based on very small amount of data and thus very imprecise and impossible to do meaningful inference.  Therefore, we need to find a way to leverage on the consistent CATE estimates to reconstruct an estimate for the ATE.  There are two main approaches to achieve this: standardization and inverse probability weighting.
+
+\bigskip
+\noindent\textbf{\underline{Standardization}}
+
+\medskip
+In \Cref{eq: real_ate}, we showed that under conditional exchangeability with respect to $L$ (and consistency), the mean counteractual outcome under treatment $a$ can be written as a weighted average of estimated conditional outcomes
+\begin{equation}
+    \E[Y^a] = \sum_l \E[Y|A=a, L=l] \P[L=l]
+\end{equation}
+so the average treatment effect can also be written as a weighted average of CATEs
+\begin{equation}
+    \E[Y^1-Y^0] = \sum_l (\E[Y|A=1, L=l]-\E[Y|A=0, L=l]) \P[L=l] \label{eq: standardization}
+\end{equation}
+This method is called \textit{standardization} in epidemiology.  The reason standardization is important in epidemiology is that, say we want to compare the death rates of two different countries to reflect their medical standards.  However, country A's citizens are primarily 20-50 years old, while country B's citizens are primarily 60-80 years old.  Then, even if the two countries have the same medical standards, the \textit{crude} death rate of country B would be higher than country A since it has more elderlies.  A way to fairly compare these two countries is to first calculate the age-specific death rates of country A, say, $\theta_i$ for citizens of age $i$.  Then, we denote the proportion of citizens that is of age $i$ in country B as $p_i$.  Then, the crude death rate for country A when its population structure is the same as country B is $\sum_i \theta_i p_i$, and this number can be compared with the crude death rate of country B.
+
+\medskip
+In \Cref{eq: standardization}, we are actually doing standardization of ATE with respect to the distribution of $L$, only that in this formula we are just standardizing into the population structure we observe, hence the weights $\P[L=l]$.  In fact, if we would like to know the ATE for another population with different distribution of $L$, we can denote the probability of $L = l$ in that population as $p_l$ and estimate the ATE with
+\begin{equation}
+    \sum_l (\E[Y|A=1, L=l]-\E[Y|A=0, L=l]) p_l
+\end{equation}
+
+\medskip
+In our example data, since $P[L = 0] = 12/20 = 0.6$ and $P[L = 1] = 8/20 = 0.4$, we can estimate the ATE (using risk difference as measure) for the whole population by
+\begin{equation}
+    \hat{\tau}_{\text{RD}} = \sum_{l=0}^1(\hat{\E}[Y|A=1, L=l]- \hat{\E}[Y|A=0, L=l])\hat{\P}[L=l] = 0 \cdot 0.6 + 0 \cdot 0.4 = 0
+\end{equation}
+which is a little bit anticlimactic.  However, in the case where there is effect modification, then the standardization would produce different results with different distribution of $L$.
+
+\bigskip
+\noindent\textbf{\underline{Inverse probability weighting}}
+
+\medskip
+Apart from standardization, we have another approach that can help us estimate the average treatment effect.  First we see that our data can be visualized by the graph below: there are $8$ patients of lower priority (with probability $0.4$) and $12$ patients of higher priority (with probability $0.6$).  Among the patients of lower priority, there is a probability of $0.5$ receiving the transplant, while among the patients of higher priority, there is a probability of $0.75$ receiving the transplant.  The outcome is then drawn in the circles on the right hand side.  In standardization, we first estimated the CATE for $L=0$ and $L=1$ by calculating the risk difference between the upper two circles and lower two circles (which are both $0$), and then weighted these CATEs with the probability of $L=0$ ($0.4$) and $L=1$ ($0.6$).  Notice that in this graph, if we calculated the crude risk difference by combining the second and fourth circle and contrasted it with the first and third circles, we would get a biased ATE estimate of $\frac{7}{13}-\frac{3}{7} \ne 0$.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.45\textwidth]{causal_sections/graphs/Original.png}
+\end{figure}
+
+\pagebreak
+In inverse probability weighting, we are trying make comparing the crude risk difference work, but not without a little tweak to the data.  First, let us imagine a counterfactual world where all patients are not treated.  Since we have shown that $\E[Y|A=0, L]$ is equal to $\E[Y^0|L]$ under the conditional exchangeability assumption, we can use $\E[Y|A=0, L=0] = 0.25$ and $\E[Y|A=0, L=1] = 2/3$ to reconstruct the expected outcome, which is shown in the left panel in the figure below.  Then, we can imagine another counterfactual world where all patients are treated.  We can then use $\E[Y|A=1, L=0] = 0.25$ and $\E[Y|A=1, L=1] = 2/3$ to recreate the expected outcome under this world.  
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.8\textwidth]{causal_sections/graphs/Counterfactual.png}
+\end{figure}
+
+Now, we can combine the two panels above into one graph, shown as below.  First notice that in this new "inflated" data, the treatment assignment is no longer related to $L$, since within each stratum of $L$, both treatments would have the same amount of patients as what that stratum originally had.  In other words, the patients in this "inflated" data can actually be seen as randomly assigned to each treatment with probability $0.5$.  Another point to notice is that in this inflated data, the distribution of $L$ is still $\P[L=1] = 0.6$, which is the same as the original data.  Therefore, we can treat this set of new data as randomized experiment and just compute the difference in mean outcome between the two treatment groups.  In this case, it would be 
+\begin{equation}
+    \E_{\text{IPW}}[Y|A=1] - \E_{\text{IPW}}[Y|A=0] = \frac{10}{20} - \frac{10}{20} = 0
+\end{equation}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.6\textwidth]{causal_sections/graphs/IP_weighting.png}
+\end{figure}
+
+If we look back into how we derived the data in the counterfactual word, we can verify that a patient with treatment $A=a$ and covariate $L=l$ would be inflated by a factor of $\frac{1}{\P[A = a | L = l]}$, which is the inverse of the probability for that patient receiving his treatment.  Therefore, this approach is called the \textbf{inverse probability weighting} approach.  It can be proven that under non-parametric estimation of CATE and treatment probability, the standardization approach and the inverse probability weighting approach is actually equivalent.

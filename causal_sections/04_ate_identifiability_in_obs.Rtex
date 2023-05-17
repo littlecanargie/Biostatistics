@@ -1,0 +1,50 @@
+In the previous section, we showed that even if marginal exchangeability does not hold, as long as conditional exchangeability holds, along with the consistency assumption, we can identify the CATE using the data.  In turn, we can use standardization or inverse probability weighting to identify the ATE.  In the case where the variable $L$ that is conditioned on is discrete, the statistical estimand that identifies the ATE (defined as mean difference / risk difference) via standardization, shown in \Cref{eq: standardization}, is,
+\begin{equation}
+    \Tilde{\tau}^{(std)} = \sum_l(\E[Y|A=1,L=l] - \E[Y|A=0, L=l])\P[L=l] \label{eq: stand_discrete}
+\end{equation}
+which can be alternatively written using double expectations
+\begin{equation}
+    \Tilde{\tau}^{(std)} = \E_{L \sim F_L}\big[\E_Y[Y|A=1,L=l] - \E_Y[Y|A=0, L=l]\big]\label{eq: stand_double_E}
+\end{equation}
+Notice that the outer expectation is taken with respect to $L$, with $L$ following the actual distribution of $L$ for the population of interest, with cumulative density function denoted as $F_L$.  This expression implies that even if $L$ is continuous so that estimating $\P[L=l]$ in \Cref{eq: stand_discrete} does not make sense, we can still make use of \Cref{eq: stand_double_E} by the following procedure:
+
+\begin{enumerate}
+    \item Obtain function estimates $\hat{\mu}_1(l)$ and $\hat{\mu}_0(l)$ for $\E[Y|A=1,L=l]$ and $\E[Y|A=0,L=l]$.
+    \item For \textit{every} observation $i$ within the population, calculate $\hat{\tau}^{(std)}_i = \hat{\mu}_1(L_i) - \hat{\mu}_0(L_i)$ and obtain the empirical average of $\hat{\tau}^{(std)}_i$ as the estimate for ATE:
+    \[\hat{\tau}^{(std)} = \frac{1}{N}\sum_i\hat{\tau}^{(std)}_i = \frac{1}{N}\sum_i [\hat{\mu}_1(L_i) - \hat{\mu}_0(L_i)]\]
+\end{enumerate}
+
+For inverse probability weighting approach, the way we identified the ATE is to weight each individual with the reciprocal of the probability of them receiving their treatments base on their covariate values.  Then, the mean counterfactual outcome $\E[Y^a]$ is estimated by averaging the outcomes of the "inflated" individual pool with $A=a$.  However, it is not obvious how to average a pool of inflated individuals when the number of individuals is not integer after the weighting.  Therefore, we now set out to formalize this weighting-averaging process with mathematical expressions.  First notice that within the subpopulation with $A=a$, the standardized weight, i.e. the weight divided by the average weight within the subpopulation, is
+\begin{align}
+    w(L) &= \frac{\frac{1}{\P[A=a | L]}}{\E_L\big[\frac{1}{\P[A=a | L]}\big|A=a\big]}\\
+    &= \frac{\frac{1}{\P[A=a | L]}}{\E_L\big[\frac{f_L(L)}{f_{L|A}(L | A=a)\P[A=a]}\big|A=a\big]}\\
+    &= \frac{\frac{1}{\P[A=a|L]}}{\frac{1}{\P[A=a]}\E_L\big[\frac{f_L(L)}{f_{L|A}(L | A=a)}\big|A=a\big]}\\
+    &= \frac{\frac{1}{\P[A=a|L]}}{\frac{1}{\P[A=a]}\int \frac{f_L(l)}{f_{L|A}(l|a)}f_{L|A}(l|a)dl}\\
+    &= \frac{\frac{1}{\P[A=a|L]}}{\frac{1}{\P[A=a]}\int f_L(l) dl} = \frac{\P[A=a]}{\P[A=a|L]}
+\end{align}
+Therefore, the statistical estimand for the ATE is
+\begin{align}
+    \Tilde{\tau}^{(ipw)} &= \E[w(L)Y | A=1] - \E[w(L)Y | A=0]\\
+    &= \E\Big[\frac{Y \P[A=1]}{\P[A=1|L]} \Big| A=1\Big] - \E\Big[\frac{Y \P[A=0]}{\P[A=0|L]} \Big| A=0\Big]\\
+    &= \E\Big[\frac{Y \mathbf{1}(A=1)}{\P[A=1|L]} \Big] - \E\Big[\frac{Y \mathbf{1}(A=0)}{\P[A=0|L]} \Big] \label{eq: ipw_E}
+\end{align}
+Therefore, based on \Cref{eq: ipw_E}, we can obtain the inverse probability weighting estimator for ATE by the following procedure:
+\begin{enumerate}
+    \item Obtain function estimates $\hat{e}_1(l)$ and $\hat{e}_0(l)$ for $\P[A=1|L=l]$ and $\P[A=0|L=l]$, which in the context of conditional randomized experiment are known and do not need to be estimated. $\hat{e}_1(l)$ is often termed as the \textbf{propensity score} among epidemiologists.
+    \item For \textit{every} observation $i$ within the population, calculate $\hat{\tau}^{(ipw)}_i = \big(\frac{\mathbf{1}(A_i=1)}{\hat{e}_1(L_i)}-\frac{\mathbf{1}(A_i=0)}{\hat{e}_0(L_i)}\big)Y$ and obtain the empirical average of $\hat{\tau}^{(ipw)}_i$ as the estimate for ATE:
+    \[\hat{\tau}^{(ipw)} = \frac{1}{N}\sum_i\hat{\tau}^{(ipw)}_i = \frac{1}{N}\sum_i\Big(\frac{\mathbf{1}(A_i=1)}{\hat{e}_1(L_i)}-\frac{\mathbf{1}(A_i=0)}{\hat{e}_0(L_i)}\Big)Y\]
+\end{enumerate}
+
+In the previous section, we used the example of conditional randomization to illustrate a scenario where conditional exchangeability would hold.  In the case of causal inference in observational data, the same set of assumptions and procedures can be carried over, with some caveats and amendments:
+\begin{enumerate}[a)]
+    \item The conditional exchangeability assumption will be harder to justify:  we are roughly assuming that all prognosis-related information that determines the treatment assignment is observed as covariates.  In other words, under the medical setting, we are assuming that among the parameters the healthcare practitioner considered when making treatment decisions, we have measure all parameters that is related to the patient's future well-being.  This is a very strong assumption since even if there is only one single unmeasured parameter, we are under serious risk of getting a biased ATE estimate.
+    \item For conditionally randomized experiments, the propensity scores are known by design.  Yet for observational studies, the propensity scores have to be estimated.
+    \item In conditonally randomized experiments, the treatments are often given by experimenters, so the counterfactual outcomes $Y^a$ defined in the consistency assumption is well-defined.  However, for observational studies, the same treatment may have different versions among different subjects.  For example, if the treatment is simply stated as "drug $A$", then different physicians may prescribe different doses, different intake intervals, and provide different levels of health education along with the prescription.  In this case, $Y^a$ is no longer well-defined and the ATE we are estimating may be fuzzy.  What is worse is that, it may be the case that different versions of the treatments are not randomly distributed among subjects of different prognoses, which can introduce another layer of bias to our ATE estimate. 
+    \item Notice that for the statistical estimand in standardization, we need the estimates of $\E[Y|A=1, L]$ and $\E[Y|A=0, L]$, which can be estimated non-parameterically only if we can observe individuals with $A=1$ and $A=0$ for any possible values of $L$.  For example, if for any subpopulation with $L=l$, all individuals will be assigned to, say, $A=1$.  Then, there is no way that we can find $\E[Y|A=0, L=l]$ unless we do some extrapolation.  Similarly, for the inverse probability weighting estimator, we have $\P[A=1|L]$ and $\P[A=0|L]$ in the denominator, so they cannot be zero.  In conditionally randomized experiments, the propensity score $\P[A=1 | L]$ will always be designed to be between $0$ and $1$, i.e. participants within each strata of $L$ will be randomized to either treatment, so the scenario above that breaks down causal inference would not occur.  However, in observational studies, there is possibility that due to guidelines or clinical common sense, some types of patients will always receive one of the treatments.  Therefore, we have to be careful that for these patients, we do not have the ability to infer their treatment effects, so we need to restrict our target population of inference in advance and remove those out of our scope.  The assumption that ensures that the scenario above does not happen is the \textbf{Positivity} assumption, which is stated below 
+\end{enumerate}
+\begin{assumption}[Positivity]
+    $\P[A=a|L=l] > 0, \; \forall a \in \{0,1\}, l \in \mathcal{X}_L$
+    , where $\mathcal{X}_L$ is the support of $L$ within the whole population.
+\end{assumption}
+
+All in all, for observational studies, there are three basic assumptions we should make: \textit{conditional exchangeability}, \textit{consistency} and \textit{positivity}, all with their own pitfalls.  Under these assumptions, we can obtain (asymptotically) unbiased estimators for the ATE using the standardization approach or inverse probability weighting approach.  The standardization approach focuses on estimating the relation between $Y$ and $A,L$.  The inverse probability weighting approach instead focuses on estimating the relation between $A$ and $L$.  Since these two estimators both provide (asymptotically) unbiased estimators while using different parts of the information from the data, it is possible to combine them to obtain a "merged" estimator that has smaller variance.  We will look at this type of merged estimators in later sections.

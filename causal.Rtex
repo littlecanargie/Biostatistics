@@ -19,7 +19,7 @@
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{cleveref}
 \usepackage{booktabs}
-\usepackage{enumitem}
+\usepackage[shortlabels]{enumitem}
 \newcommand{\E}{\mathbb{E}}
 \renewcommand{\P}{\mathbb{P}}
 \newcommand{\bX}{\boldsymbol{X}}
@@ -49,8 +49,22 @@ The aim of "\textit{causal inference}" is to study the mathematical formulation,
 <<child = 'causal_sections/01_counterfactuals.Rtex'>>=
 @
 
-\section{Causation, Association and Marginial Exchangeability}
+\section{Causation, Association and Marginal Exchangeability}
 <<child = 'causal_sections/02_causation_association.Rtex'>>=
+@
+
+\section{ATE under Conditional Exchangeability}
+<<child = 'causal_sections/03_conditional_exchangeability.Rtex'>>=
+@
+
+\section{Identifiability of ATE in Observational Studies}
+
+<<child = 'causal_sections/04_ate_identifiability_in_obs.Rtex'>>=
+@
+
+\section{Representation of Causal Structures using Causal Diagrams}
+
+<<child = 'causal_sections/05_dag.Rtex'>>=
 @
 
 \end{document}

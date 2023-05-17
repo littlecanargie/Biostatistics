@@ -1,0 +1,56 @@
+In the previous sections, we talked about how conditional exchangeability could aid us in finding the ATE.  In the easy case where there is only one covariate to be considered, it may be possible to argue conditional exchangeability from its definition.  However, in the case where there are multiple variables with complex causal structures, it would then not be evident which identification strategy would be valid (eg. which variables should we put into the estimation of $\hat{\mu}_a$ during standardization).  Fortunately, we can rely on a graphical representation of the causal structure, which we term as the \textbf{causal diagram}, to help us decide which variables to control for and which variables to avoid controlling for.
+
+\medskip
+The simplest and most commonly used causal diagram is the causal directed acyclic graph (DAG), which connects variables with single arrows ("directed") that represents the causal relationship between variables.  To prevent confusion of causal relationships, the directed graph should also be acyclic, which implies that any casual chains cannot form a loop, i.e. you can not have a chain with $A \Rightarrow B \Rightarrow C \Rightarrow A$.  In the case where the variables have longitudinal measurements, the variables have to be splitted into different versions representing their values at different time points to account for temporality-hinted causal directions.  Within this graph, we say $A$ is a \textit{direct cause} or \textit{parent} of $B$ if $A$ has an arrow pointed to $B$; and we say that $B$ is a \textit{descendant} of $A$ if there exists a path formed by forward arrows that goes from $A$ to $B$.
+
+\medskip
+Aside form being directed and acyclic, in order for the causal DAG to reflect the full information between the variables, there are two additional requirements for a causal DAG to be valid:
+\begin{enumerate}
+    \item The lack of an arrow from one variable $A$ to another variable $B$ implies that there is no direct causal effect of $A$ on $B$.
+    \item All common causes between any pair of variables should be included (i.e. absence of such variables imply no common causes between the two variables), even if they are not measured.
+\end{enumerate}
+If we have a valid causal graph, then we say that $A$ has a causal effect on $B$ if there is at least one path from $A$ to $B$ that is formed by forward arrows.
+
+\medskip
+The directed acyclic graph depicts the causal structure of the data.  Yet to link the causal structure to the actual data distribution, we will often need the \textbf{causal Markov assumption}, which states that \textit{any variable $V$, when conditioned on its direct causes, is independent to its non-descendents}.  Under this assumption, suppose $V = (V_1, V_2,...,V_M)^\top$ is the vector of variables on the graph with values $v = (v_1, v_2, ..., v_M)^\top$, then the probability density of $v$ can be factored as
+\begin{equation}
+    f_V(v) = \prod_{j=1}^M f_{V_j, PA_j}(v_j|pa_j)
+\end{equation}
+where $pa_j$ is realized value for the vector of variables $PA_j$ that are the direct causes of $V_j$.  This is called the \textit{Markov factorization} for the joint distribution of variables.  For brevity, later we will omit the subscript for $f$ and tell them part from their arguments. 
+
+\medskip
+The important value of causal DAGs and their implied Markov factorizations is that we can infer from the graph that if it implies there would be independence or conditional independence between variables.  If a graph depicting absence of causal effect from $A$ to $Y$ implies (conditional) independence between them, but in data we detected a significant (conditional) association between $A$ and $Y$, then we reject the DAG and conclude that there \textit{is} causal effect, under the premise that the only alternative form of the graph is one with arrow from $A$ to $Y$ (i.e. the other part of the graph is assumed to be correct).
+
+\medskip
+For example, the DAG in panel (a) above represents the causal structure of a marginally randomized experiment with absence of treatment effect.  There are no common causes between the treatment $A$ and outcome $Y$ since the treatment is randomized.  It is immediately clear that from the graph, $A$ and $Y$ should be marginally independent since from the Markov factorization:
+\begin{equation}
+    f(A,Y) = f(A) f(Y)
+\end{equation}
+where in the right hand side $A$ and $Y$ are not conditioned on any variable since they do not have direct causes.  Therefore, in the case of marginally randomized experiments, suppose we see a significant association between the treatment and the outcome, we can confidently say that this association is introduced by the causal (treatment) effect of the treatment on the outcome.  
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width = 0.55 \textwidth]{causal_sections/graphs/DAG.png}
+\end{figure}
+
+Panel (b) represents the causal structure of a conditional randomized experiment with $L$ as the conditioned (vector) variable with no treatment effect for $A$ on $Y$.  This is also the DAG for observational studies where we have measured all common causes between $A$ and $Y$ that leads to conditional exchangeability.  It can be shown that under this graph, $A$ and $Y$ are not marginally independent, but they are \textit{conditionally} independent when conditioned on $L$.  Therefore, when we are looking into every strata of $L$ and realize that the treatment is actually associated with the outcome, this association cannot come from other places aside from the causal effect from $A$ to $Y$ that we originally thought to be absent.  
+
+\medskip
+For panel (c), $L_2$ is the only direct cause of outcome $Y$, while $L_1$ is the only direct cause for treatment $A$.  In addition, $L_1$ is a direct cause of $L_2$.  In this case, we can still show that $A$ and $Y$ are not marginally independent, but as long as you condition on either $L_1$ or $L_2$ (or event both!), $A$ and $Y$ will be conditionally independent, so detection of their conditional association would imply a casual effect from $A$ to $Y$.
+
+\medskip
+In the case of panel (d), there is a path from $A$ to $M$ to $Y$ that is formed by forward arrows.  Therefore, $A$ should have a causal effect on $Y$.  However, if we only looked at the conditional association between $A$ and $Y$ conditional on $M$, they would be conditionally independent.  Notice that the absence of conditional association implied no causal effect of $A$ on $Y$ in panel (b), but the absence of conditional association here in panel (d) does not mean that $A$ has no casual effect.  Therefore, the way we interpret the conditional associations depends largely on the underlying causal DAG, and we should not willy-nilly condition on everything we've got, or we may risk missing a true causal effect. 
+
+\medskip
+For panels (e) and (f), $A$ does not have a causal effect on $Y$ (since the path from $A$ to $Y$ contains an arrow that is of the wrong direction).  In this case, we can show that $A$ and $Y$ would be marginally independent, but conditional on $C$ or $D$, $A$ and $Y$ be conditionally dependent.  Therefore, here we have another case where conditioning on more variables does not do us good: we get the correct conclusion when we only look at the marginal association between $A$ and $Y$, but arrive at the wrong conclusion when we conditional on either $C$ or $D$.
+
+\medskip
+The deduction of the previous graphs is intuitive and mathematically simple, but under a large causal DAG, it can be cumbersome to start from the Markov factorization every time.  Fortunately, previous literature investigating the mathematical theory of the link between causal DAGs and implied (conditional) independence, which is called \textbf{d-separation}, has granted us a simple set of rules that can help us determine if two variables should be (conditionally) independent under a specific causal DAG.  We first define a \textit{path} as a chain of non-repeating variables that is connected by arrows either direction.  For all paths between two variables:
+
+\begin{enumerate}
+    \item If we are not conditioning on any variables, then a path is blocked if and only if somewhere in the path there are two arrowheads colliding.  (We call the variable where the two arrowheads collide the \textit{collider})
+    \item If a path contains a non-collider that is conditioned , then the path is blocked.
+    \item If a collider or its descendent is conditioned, then the path is \textit{not} blocked by the collider.
+\end{enumerate}
+
+Based on the rules above, if there are any other paths that are not blocked between the two variables of interest, then in the data they will be (conditionally) dependent.  In epidemiology, we say that \textbf{confounding bias} is the bias introduced by unblocked paths formed by common causes between the treatment and the outcome, and \textbf{selection bias} is the bias introduced by stratifying on the collider and opening extra paths between the treatment and outcome.
