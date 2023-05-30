@@ -14,7 +14,7 @@ If we have a valid causal graph, then we say that $A$ has a causal effect on $B$
 \medskip
 The directed acyclic graph depicts the causal structure of the data.  Yet to link the causal structure to the actual data distribution, we will often need the \textbf{causal Markov assumption}, which states that \textit{any variable $V$, when conditioned on its direct causes, is independent to its non-descendents}.  Under this assumption, suppose $V = (V_1, V_2,...,V_M)^\top$ is the vector of variables on the graph with values $v = (v_1, v_2, ..., v_M)^\top$, then the probability density of $v$ can be factored as
 \begin{equation}
-    f_V(v) = \prod_{j=1}^M f_{V_j, PA_j}(v_j|pa_j)
+    f_V(v) = \prod_{j=1}^M f_{V_j | PA_j}(v_j|pa_j)
 \end{equation}
 where $pa_j$ is realized value for the vector of variables $PA_j$ that are the direct causes of $V_j$.  This is called the \textit{Markov factorization} for the joint distribution of variables.  For brevity, later we will omit the subscript for $f$ and tell them part from their arguments. 
 
@@ -45,12 +45,12 @@ In the case of panel (d), there is a path from $A$ to $M$ to $Y$ that is formed 
 For panels (e) and (f), $A$ does not have a causal effect on $Y$ (since the path from $A$ to $Y$ contains an arrow that is of the wrong direction).  In this case, we can show that $A$ and $Y$ would be marginally independent, but conditional on $C$ or $D$, $A$ and $Y$ be conditionally dependent.  Therefore, here we have another case where conditioning on more variables does not do us good: we get the correct conclusion when we only look at the marginal association between $A$ and $Y$, but arrive at the wrong conclusion when we conditional on either $C$ or $D$.
 
 \medskip
-The deduction of the previous graphs is intuitive and mathematically simple, but under a large causal DAG, it can be cumbersome to start from the Markov factorization every time.  Fortunately, previous literature investigating the mathematical theory of the link between causal DAGs and implied (conditional) independence, which is called \textbf{d-separation}, has granted us a simple set of rules that can help us determine if two variables should be (conditionally) independent under a specific causal DAG.  We first define a \textit{path} as a chain of non-repeating variables that is connected by arrows either direction.  For all paths between two variables:
+The deduction of the previous graphs is intuitive and mathematically simple, but under a large causal DAG, it can be cumbersome to start from the Markov factorization every time.  Fortunately, previous literature investigating the mathematical theory of the link between causal DAGs and implied (conditional) independence, which is called \textbf{d-separation}, has granted us a simple set of rules that can help us determine if two variables should be (conditionally) independent under a specific causal DAG.  We first define a \textit{path} as a chain of non-repeating variables that is connected by arrows of either direction.  For all paths between two variables:
 
 \begin{enumerate}
     \item If we are not conditioning on any variables, then a path is blocked if and only if somewhere in the path there are two arrowheads colliding.  (We call the variable where the two arrowheads collide the \textit{collider})
-    \item If a path contains a non-collider that is conditioned , then the path is blocked.
+    \item If a path contains a non-collider that is conditioned, then the path is blocked.
     \item If a collider or its descendent is conditioned, then the path is \textit{not} blocked by the collider.
 \end{enumerate}
 
-Based on the rules above, if there are any other paths that are not blocked between the two variables of interest, then in the data they will be (conditionally) dependent.  In epidemiology, we say that \textbf{confounding bias} is the bias introduced by unblocked paths formed by common causes between the treatment and the outcome, and \textbf{selection bias} is the bias introduced by stratifying on the collider and opening extra paths between the treatment and outcome.
+Based on the rules above, if there are any paths that are not blocked between the two variables of interest, then in the data they will be (conditionally) dependent.  In epidemiology, we say that \textbf{confounding bias} is the bias introduced by unblocked paths formed by common causes between the treatment and the outcome, and \textbf{selection bias} is the bias introduced by stratifying on the collider and opening extra paths between the treatment and outcome.
