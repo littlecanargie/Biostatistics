@@ -1,0 +1,36 @@
+In previous sections, we talked about the two approaches that can aid us in the estimation of ATE: standardization and inverse probability weighting.  The building block of standardization is the conditional expectation of the outcome $\mu_a(l) = \E[Y|A=a,L=l]$, while for inverse probability weighting it is the conditional probability of treatment assignment $e_a(l) = \P[A=a|L=l]$.  These two functions are often termed as \textit{nuisance functions} since they are not directly of our interest.  In the case where $L$ has a small number of value patterns, both functions can be estimated with empirical means (which would be consistent as long as the conditional variance of $Y$ is finite).  However, in the case where $L$ has a large number of value patterns, eg. some of the elements in $L$ are continuous or $L$ is high-dimensional, using empirical mean would be impractical or even infeasible, and we would need a model to aid us in the estimation of $\mu_a$ and $e_a$.  Let's denote the estimators for $\mu_a$ and $e_a$ as $\hat{\mu}_{a,n}$ and $\hat{e}_{a,n}$, where $n$ is the number of observations used to estimate the nuisance functions.
+
+\medskip
+Since we are using models to estimate $\mu_a$ and $e_a$, the "correctness" of the estimated models would be crucial.  In particular, we would at least want them to be consistent.  That is, for all $\varepsilon > 0$, $a \in \{0,1\}$ and $l$ in the support of $L$,
+\begin{gather}
+    \lim_{n \rightarrow \infty}\P[|\hat{\mu}_{a,n}(l)-\mu_{a}(l)| > \varepsilon] = 0\\
+    \lim_{n \rightarrow \infty}\P[|\hat{e}_{a,n}(l)-e_{a}(l)| > \varepsilon] = 0
+\end{gather}
+The consistency of $\hat{\mu}_{a,n}$ and $\hat{e}_{a,n}$ ensures that the plug-in estimators in \Cref{eq: plugin_std,eq: plugin_ipw} are both asymptotically unbiased.  When either of these models are mis-specified, their corresponding estimators for ATE will be asymptotically biased.  It would thus be enticing to construct an estimator that is asymptotically unbiased as long as \textit{one} of the nuisance function estimators is consistent.  The \textbf{doubly robust} estimators serves this purpose exactly, and one of the doubly robust estimators is as follows
+\begin{equation}
+    \hat{\tau}^{(dr)} = \frac{1}{N}\sum_i \hat{\tau}^{(dr)}_i = \frac{1}{N}\sum_i \Big[\hat{\mu}_1(L_i) - \hat{\mu}_0(L_i) + \Big(\frac{\mathbf{1}(A_i = 1)}{\hat{e}_1(L_i)} - \frac{\mathbf{1}(A_i = 0)}{\hat{e}_0(L_i)}\Big)(Y - \hat{\mu}_{A_i}(L_i))\Big]
+\end{equation}
+To see why this estimator is doubly robust, first out of convenience, we assume that the nuisance functions are estimated in a separate, randomly split sample.  Then, given $\hat{\mu}_a$ and $\hat{e}_a$, $\hat{\tau}^{(dr)}$ is an empirical mean on a sample independent to the sample used to derive the nuisance function.  It is thus unbiased for 
+\begin{equation}
+    \E\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \Big(\frac{\mathbf{1}(A = 1)}{\hat{e}_1(L)} - \frac{\mathbf{1}(A = 0)}{\hat{e}_0(L)}\Big)(Y - \hat{\mu}_{A}(L))\Big]
+\end{equation}
+where the expectation is taken over $L, A, Y$.  Now for the doubly robust part, let's first assume that $\hat{\mu}_a$ is consistent and $\hat{e}_a$ is just a random function.  Then, asymptotically we can replace $\hat{\mu}_a$ with $\mu_a$, and the expectation becomes
+\begin{align}
+    &\E\Big[\mu_1(L) - \mu_0(L) + \Big(\frac{\mathbf{1}(A = 1)}{\hat{e}_1(L)} - \frac{\mathbf{1}(A = 0)}{\hat{e}_0(L)}\Big)(Y - \mu_{A}(L))\Big]\\
+    =&\E[\mu_1(L) - \mu_0(L)] + \E_L\Big[\E_{A,Y}\Big[\Big(\frac{\mathbf{1}(A = 1)}{\hat{e}_1(L)} - \frac{\mathbf{1}(A = 0)}{\hat{e}_0(L)}\Big)(Y - \mu_{A}(L))\Big|L\Big]\Big]\\
+    =&\tau + \E_L\Big[\frac{\E_Y[Y - \mu_1(L)|A=1,L]\P[A=1|L]}{\hat{e}_1(L)}\Big] - \E_L\Big[\frac{\E_Y[Y - \mu_0(L)|A=0,L]\P[A=0|L]}{\hat{e}_0(L)}\Big]\\
+    =&\tau + 0 - 0 = \tau
+\end{align}
+where in the last line we use the fact that $\mu_a(L) = \E[Y|A=a, L]$.  Then let's assume that $\hat{e}_a$ is consistent and $\hat{\mu}_a$ is just a random function.  Then asymptotically we can replace $\hat{e}_a$ with $e_a$, and the expectation becomes
+\begin{align}
+    &\E\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \Big(\frac{\mathbf{1}(A = 1)}{e_1(L)} - \frac{\mathbf{1}(A = 0)}{e_0(L)}\Big)(Y - \hat{\mu}_{A}(L))\Big]\\
+    =&\E_L\Big[\E_{A,Y}\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \Big(\frac{\mathbf{1}(A = 1)}{e_1(L)} - \frac{\mathbf{1}(A = 0)}{e_0(L)}\Big)(Y - \hat{\mu}_{A}(L))\Big|L\Big]\Big]\\
+    =&\E_L\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \frac{\E_Y[Y-\hat{\mu}_1(L)|A=1, L]\P[A=1|L]}{e_1(L)}- \frac{\E_Y[Y-\hat{\mu}_0(L)|A=0, L]\P[A=1|L]}{e_0(L)}\Big]\\
+    =&\E_L\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \E_Y[Y-\hat{\mu}_1(L)|A=1, L]- \E_Y[Y-\hat{\mu}_0(L)|A=0, L]\Big]\\
+    =&\E_L\Big[\hat{\mu}_1(L) - \hat{\mu}_0(L) + \E_Y[Y|A=1, L] - \hat{\mu}_1(L)- \E_Y[Y|A=0, L] + \hat{\mu}_0(L)\Big]\\
+    = &\E_L[\E_Y[Y|A=1,L]] - \E_L[\E_Y[Y|A=0,L]] = \tau
+\end{align}
+where in the fourth line we use the fact that $e_a(L) = \P[A=a|L]$.  In fact, it can be shown that, if we divide the doubly robust estimator into two parts, one estimating the mean counterfactual outcome under treatment $1$ and another for treatment $0$, then the asymptotic bias for the treatment $a$ part is proportional to the \textit{product} of the asymptotic biases for $\hat{\mu}_a$ and $\hat{e}_a$.
+
+\medskip
+Another advantage of doubly robust estimators lies in the scenario where the dimension of $L$ is large so that we require machine learning methods to estimate $\mu_a$ and $e_a$.  When we use conventional statistical models without parameter regularization to estimate these functions, eg. linear regression, logistic regression, as long as the number of parameters does not grow relative to the sample size, the \textit{mean squared error} of the function estimators are shrinking at an order of $n^{-1/2}$.  Taking the sample mean as example: since it is unbiased for the population mean, its mean squared error is its standard deviation, $\sigma/\sqrt{n}$, where $\sigma$ is the population standard deviation.  Therefore, for standardization or IPTW estimators, if we use conventional statistical models to estimate the nuisance functions, the convergence rate for the estimators are in the order of $n^{-1/2}$.  However, for modelling approaches that are more flexible like kernel smoothing or machine learning, the convergence rate of the function estimator, even under favorable condition (eg. sparsity of relevant variables, smoothness of the true function), the convergence rate would be something slower like $n^{-\delta}$ with $1/4 < \delta < 1/2$.  This implies that standardization or IPTW with nuisance functions estimated by flexible approaches can have convergence rate slower than $n^{-1/2}$, leaving conventional robust standard errors and confidence intervals invalid.  Since the doubly robust estimator involves products of the nuisance functions, it can be shown that as long as the \textit{product} of convergence rate for the two nuisance functions is faster than $n^{-1/2}$ (which also implies that they should be consistent), their influence on the mean squared error for the resulting doubly robust estimator would be asymptotically negligible since the process of sample average would produce a mean squared error at the rate of $n^{-1/2}$. 

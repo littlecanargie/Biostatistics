@@ -67,4 +67,9 @@ The aim of "\textit{causal inference}" is to study the mathematical formulation,
 <<child = 'causal_sections/05_dag.Rtex'>>=
 @
 
+\section{Modeling in Causal Inference and Doubly Robust Estimators}
+
+<<child = 'causal_sections/06_modeling.Rtex'>>=
+@
+
 \end{document}

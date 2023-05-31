@@ -11,7 +11,9 @@ Notice that the outer expectation is taken with respect to $L$, with $L$ followi
 \begin{enumerate}
     \item Obtain function estimates $\hat{\mu}_1(l)$ and $\hat{\mu}_0(l)$ for $\E[Y|A=1,L=l]$ and $\E[Y|A=0,L=l]$.
     \item For \textit{every} observation $i$ within the population, calculate $\hat{\tau}^{(std)}_i = \hat{\mu}_1(L_i) - \hat{\mu}_0(L_i)$ and obtain the empirical average of $\hat{\tau}^{(std)}_i$ as the estimate for ATE:
-    \[\hat{\tau}^{(std)} = \frac{1}{N}\sum_i\hat{\tau}^{(std)}_i = \frac{1}{N}\sum_i [\hat{\mu}_1(L_i) - \hat{\mu}_0(L_i)]\]
+    \begin{equation}
+        \hat{\tau}^{(std)} = \frac{1}{N}\sum_i\hat{\tau}^{(std)}_i = \frac{1}{N}\sum_i [\hat{\mu}_1(L_i) - \hat{\mu}_0(L_i)] \label{eq: plugin_std}
+    \end{equation}
 \end{enumerate}
 
 For inverse probability weighting approach, the way we identified the ATE is to weight each individual with the reciprocal of the probability of them receiving their treatments base on their covariate values.  Then, the mean counterfactual outcome $\E[Y^a]$ is estimated by averaging the outcomes of the "inflated" individual pool with $A=a$.  However, it is not obvious how to average a pool of inflated individuals when the number of individuals is not integer after the weighting.  Therefore, we now set out to formalize this weighting-averaging process with mathematical expressions.  First notice that within the subpopulation with $A=a$, the standardized weight, i.e. the weight divided by the average weight within the subpopulation, is
@@ -32,7 +34,9 @@ Therefore, based on \Cref{eq: ipw_E}, we can obtain the inverse probability weig
 \begin{enumerate}
     \item Obtain function estimates $\hat{e}_1(l)$ and $\hat{e}_0(l)$ for $\P[A=1|L=l]$ and $\P[A=0|L=l]$, which in the context of conditional randomized experiment are known and do not need to be estimated. $\hat{e}_1(l)$ is often termed as the \textbf{propensity score} among epidemiologists.
     \item For \textit{every} observation $i$ within the population, calculate $\hat{\tau}^{(ipw)}_i = \big(\frac{\mathbf{1}(A_i=1)}{\hat{e}_1(L_i)}-\frac{\mathbf{1}(A_i=0)}{\hat{e}_0(L_i)}\big)Y$ and obtain the empirical average of $\hat{\tau}^{(ipw)}_i$ as the estimate for ATE:
-    \[\hat{\tau}^{(ipw)} = \frac{1}{N}\sum_i\hat{\tau}^{(ipw)}_i = \frac{1}{N}\sum_i\Big(\frac{\mathbf{1}(A_i=1)}{\hat{e}_1(L_i)}-\frac{\mathbf{1}(A_i=0)}{\hat{e}_0(L_i)}\Big)Y\]
+    \begin{equation}
+        \hat{\tau}^{(ipw)} = \frac{1}{N}\sum_i\hat{\tau}^{(ipw)}_i = \frac{1}{N}\sum_i\Big(\frac{\mathbf{1}(A_i=1)}{\hat{e}_1(L_i)}-\frac{\mathbf{1}(A_i=0)}{\hat{e}_0(L_i)}\Big)Y \label{eq: plugin_ipw}
+    \end{equation}
 \end{enumerate}
 
 In the previous section, we used the example of conditional randomization to illustrate a scenario where conditional exchangeability would hold.  In the case of causal inference in observational data, the same set of assumptions and procedures can be carried over, with some caveats and amendments:
