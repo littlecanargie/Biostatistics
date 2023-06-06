@@ -1,6 +1,6 @@
 # Biostatistics
 
-- This repository contains latex codes for the materials used in my course *Biostatistics* at National Dong Hwa University, Taiwan.  (Ongoing developement!)
+- This repository contains latex codes for the materials used in my course *Biostatistics* at National Dong Hwa University, Taiwan.
 
 - The course is intended for senior undergraduates with some exposure to mathematical statistics and linear models.  In this course, I intend to introduce the theorectical *and* applied aspects of three common analysis approaches in biostatistics and epidemiology:
   - Generalized linear models
