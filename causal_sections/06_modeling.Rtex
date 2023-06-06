@@ -34,3 +34,54 @@ where in the fourth line we use the fact that $e_a(L) = \P[A=a|L]$.  In fact, it
 
 \medskip
 Another advantage of doubly robust estimators lies in the scenario where the dimension of $L$ is large so that we require machine learning methods to estimate $\mu_a$ and $e_a$.  When we use conventional statistical models without parameter regularization to estimate these functions, eg. linear regression, logistic regression, as long as the number of parameters does not grow relative to the sample size, the \textit{mean squared error} of the function estimators are shrinking at an order of $n^{-1/2}$.  Taking the sample mean as example: since it is unbiased for the population mean, its mean squared error is its standard deviation, $\sigma/\sqrt{n}$, where $\sigma$ is the population standard deviation.  Therefore, for standardization or IPTW estimators, if we use conventional statistical models to estimate the nuisance functions, the convergence rate for the estimators are in the order of $n^{-1/2}$.  However, for modelling approaches that are more flexible like kernel smoothing or machine learning, the convergence rate of the function estimator, even under favorable condition (eg. sparsity of relevant variables, smoothness of the true function), the convergence rate would be something slower like $n^{-\delta}$ with $1/4 < \delta < 1/2$.  This implies that standardization or IPTW with nuisance functions estimated by flexible approaches can have convergence rate slower than $n^{-1/2}$, leaving conventional robust standard errors and confidence intervals invalid.  Since the doubly robust estimator involves products of the nuisance functions, it can be shown that as long as the \textit{product} of convergence rate for the two nuisance functions is faster than $n^{-1/2}$ (which also implies that they should be consistent), their influence on the mean squared error for the resulting doubly robust estimator would be asymptotically negligible since the process of sample average would produce a mean squared error at the rate of $n^{-1/2}$. 
+
+\medskip
+An important side note is that, in order for the good convergence rate property to hold for doubly robust estimators, the data used to estimate the nuisance functions must be independent to the data used to calculate the sample average for ATE, like we have assumed in the previous derivation for doubly robustness.  The easiest way to fulfill this is to do \textit{sample-splitting}, where we use one random split of the data to estimate the nuisance functions and the remaining split to calculate the ATE.  However, this would lead to waste of power since not all data are utilized to calculate the ATE.  A better approach is to use \text{cross-fitting}, where the data is split into $K$ folds.  For each fold, the data other than that fold is used to estimate a set of nuisance functions, which is used only for that fold.  Therefore, there will be $K$ sets of nuisance functions, and in the calculation of ATE, the observations for each fold will use their own nuisance function.
+
+\medskip
+To see how doubly robust estimators with cross-fitting work, let us see the following example:
+
+<<>>=
+library(AIPW)
+library(SuperLearner)
+
+data("eager_sim_obs")
+
+head(eager_sim_obs)
+@
+
+Here we have a simulated dataset with \texttt{sim\_Y} as the binary outcome of interest, \texttt{sim\_A} as the binary treatment, and the other variables are the set of variables that serves as the candidates of confounders.
+
+<<>>=
+#Set the list of potential confounders
+cov = c("loss_num", "age", "time_try_pregnant", "BMI", "meanAP")
+
+#Set the SuperLearner libraries
+sl.lib <- c("SL.xgboost", "SL.cforest")
+
+#Construction of AIPW object
+AIPW_SL <- AIPW$new(Y = eager_sim_obs$sim_Y,
+                    A = eager_sim_obs$sim_A,
+                    W = subset(eager_sim_obs, select=cov), 
+                    Q.SL.library = sl.lib,
+                    g.SL.library = sl.lib,
+                    k_split = 5,
+                    verbose = T)
+
+AIPW_SL$stratified_fit()
+@
+
+Here we choose to use the \texttt{AIPW} package to carry out the doubly robust estimation, which by default calls the \texttt{SuperLearner} package to fit the two nuisance functions.  Superlearner is a model fitting framework that uses cross-validation to automatically choose from different prediction algorithm.  We specify two prediction algorithms for the package to choose from, \texttt{SL.xgboost} for XGBoost and \texttt{cforest} for random forest (there are numerous algorithms to choose from, see the manual for \texttt{SuperLearner}). \texttt{Y, A, W} specifies the outcome, treatment and list of variables to include in the two nuisance functions.  If we would like different sets of covariates in $\hat{\mu}_a$ and $\hat{e}_a$, we may alternatively specify \texttt{W.Q} for the former and \texttt{W.g} for the latter.  The \texttt{Q.SL.library} and \texttt{g.SL.library} specifies the list of algorithms used for the two nuisance functions.  \texttt{k\_split} is the number of splits for cross-fitting.  The default is $10$, but to save to we use $5$.  The \texttt{stratified\_fit} method tells \texttt{AIPW} to fit $\hat{\mu}_1$ and $\hat{\mu}_0$ separately so that influence of the treatment variable is not regularized out. 
+
+<<fig.dim=c(4,4), fig.align='center'>>=
+#Estimate the ATE, ATT and ATC
+AIPW_SL$summary(g.bound = 0.025)$estimates #propensity score truncation 
+
+library(ggplot2)
+AIPW_SL$plot.p_score()
+
+AIPW_SL$plot.ip_weights()
+@
+
+The \texttt{g.bound = 0.025} bit tells \texttt{AIPW} to truncate observations with $\hat{e}_1 < 0.025$ or $\hat{e}_1 > 1-0.025$.  These observations, based on their covariate values, have a very high probability being assigned to one of the treatments, and it is pretty likely that population with these covariate values violates the positivity assumption.  Therefore, we truncate them to avoid non-overlap issues, but the downside is that now we do not have a very intuitive explanation on which population we are inferring the ATE.  Based on the results, the counterfactual event risk when everyone (except those truncated) is given the treatment is $44.19\%$, and when everyone is not given the treatment is $33.89\%$.  Therefore, the ATE measured in risk difference is $10.30\%$ with $95\%$ confidence interval of $(-3.60\%, 2.42\%)$, which is not significant.  The \texttt{ATT Risk Difference} is the \textit{average treatment effect of the treated}, which is the average treatment effect within the population with \texttt{sim\_A = 1}; the \texttt{ATC Risk Difference} is the \textit{average treatment effect of the untreated (control)}, which is the average treatment effect within the population with \texttt{sim\_A = 0}.  This shows that there may \textit{effect modification} for the actual treatment assignment, i.e. those received treatments are actually those benefiting less from the treatment.  The first plot shows that distribution of propensity score has some overlap between the two treatment groups, which supports the positivity assumption, and the second plot shows that there are some participants not receiving the treatment with higher weights, but overall the weights are not extreme, which alleviates the concern of abnormally large weight influencing the results.
+
